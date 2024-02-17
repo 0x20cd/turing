@@ -6,11 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Quick)
 
+set(CMAKE_CXX_STANDARD 17)
+
 qt_standard_project_setup()
 
 qt_add_executable(apptm-emu
     src/main.cpp
     src/tur/emulator.hpp src/tur/emulator.cpp
+    src/tur/loader.hpp src/tur/loader.cpp
 )
 
 qt_add_resources(apptm-emu "apptm-emu"

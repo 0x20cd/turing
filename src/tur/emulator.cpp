@@ -2,14 +2,10 @@
 using tur::Emulator;
 
 Emulator::Emulator(quint32 symnull)
+    : m_symnull(symnull)
 {
-    this->reset(symnull);
-}
-
-
-void Emulator::reset(quint32 symnull)
-{
-    m_symnull = symnull;
+    m_symbols.insert(symnull);
+    m_states.insert(STATE_START);
     this->reset();
 }
 
@@ -23,17 +19,20 @@ void Emulator::reset()
 }
 
 
-bool Emulator::addRule(quint32 state, quint32 symbol, const Transition &trans)
+bool Emulator::addRule(const Condition &cond, const Transition &tr)
 {
-    if (state == STATE_END)
+    if (cond.state == STATE_END)
         throw std::invalid_argument("Final state is not a real state");
 
-    auto key = Emulator::cond(state, symbol);
+    const quint64 &key = *(quint64*)(&cond);
 
     if (m_table.contains(key))
         return false;
 
-    m_table.insert(key, trans);
+    m_symbols.insert(cond.symbol);
+    m_states.insert(cond.state);
+
+    m_table.insert(key, tr);
     return true;
 }
 
@@ -43,7 +42,8 @@ void Emulator::step()
     if (m_state == STATE_END)
         throw std::logic_error("Final state is already reached");
 
-    auto key = Emulator::cond(m_state, *m_car);
+    Condition cond {.state = m_state, .symbol = *m_car};
+    const quint64 &key = *(quint64*)(&cond);
 
     if (!m_table.contains(key))
         throw std::runtime_error("Behaviour is not defined for current state");
@@ -53,7 +53,7 @@ void Emulator::step()
     *m_car = tr.symbol;
     m_state = tr.state;
 
-    switch (tr.move) {
+    switch (tr.direction) {
     case Left:
         if (m_car == m_tape.begin())
             m_tape.push_front(m_symnull);
@@ -64,31 +64,46 @@ void Emulator::step()
             m_tape.push_back(m_symnull);
         m_car++;
         break;
+    case None:
+        break;
     default:
+        std::logic_error("Invalid direction");
         break;
     }
 }
 
 
-quint32 Emulator::state()
+quint32 Emulator::state() const
 {
     return m_state;
 }
 
 
-const decltype(Emulator::m_tape)& Emulator::tape()
+const decltype(Emulator::m_tape)& Emulator::tape() const
 {
     return m_tape;
 }
 
 
-decltype(Emulator::m_car) Emulator::carriage()
+const decltype(Emulator::m_table)& Emulator::table() const
 {
-    return m_car;
+    return m_table;
 }
 
 
-inline quint64 Emulator::cond(quint32 state, quint32 symbol)
+const decltype(Emulator::m_symbols)& Emulator::symbols() const
 {
-    return (quint64(state) << 32) | symbol;
+    return m_symbols;
+}
+
+
+const decltype(Emulator::m_states)& Emulator::states() const
+{
+    return m_states;
+}
+
+
+decltype(Emulator::m_tape.cbegin()) Emulator::carriage() const
+{
+    return m_car;
 }

@@ -3,13 +3,22 @@
 #include <QtTypes>
 #include <QHash>
 #include <list>
+#include <set>
 
 namespace tur {
-    enum Move {None = 'N', Left = 'L', Right = 'R'};
+    class Loader;
+
+    enum Direction {None = 'N', Left = 'L', Right = 'R'};
+
+    struct Condition {
+        quint32 state, symbol;
+    };
+
+    static_assert(sizeof(Condition) == sizeof(quint64));
 
     struct Transition {
-        quint32 symbol, state;
-        Move move;
+        quint32 state, symbol;
+        Direction direction;
     };
 
     constexpr quint32 STATE_START = 1;
@@ -17,11 +26,12 @@ namespace tur {
 
     class Emulator
     {
+        friend class tur::Loader;
     private:
-        static inline quint64 cond(quint32 state, quint32 symbol);
-
         QHash<quint64, Transition> m_table;
         std::list<quint32> m_tape;
+        std::set<quint32> m_symbols;
+        std::set<quint32> m_states;
         decltype(m_tape.begin()) m_car;
         quint32 m_state;
         quint32 m_symnull;
@@ -29,14 +39,18 @@ namespace tur {
     public:
         explicit Emulator(quint32 symnull = 0);
 
-        void reset(quint32 symnull);
         void reset();
-        bool addRule(quint32 state, quint32 symbol, const Transition &trans);
+        bool addRule(const Condition &cond, const Transition &tr);
         void step();
 
-        quint32 state();
-        const decltype(m_tape)& tape();
-        decltype(m_car) carriage();
+        void moveCarriage(Direction move);
+
+        quint32 state() const;
+        const decltype(m_tape)& tape() const;
+        const decltype(m_table)& table() const;
+        const decltype(m_symbols)& symbols() const;
+        const decltype(m_states)& states() const;
+        decltype(Emulator::m_tape.cbegin()) carriage() const;
     };
 }
 
