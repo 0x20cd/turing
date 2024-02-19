@@ -45,6 +45,7 @@ namespace tur {
 
         void moveCarriage(Direction move);
 
+        quint32 symnull() const;
         quint32 state() const;
         const decltype(m_tape)& tape() const;
         const decltype(m_table)& table() const;

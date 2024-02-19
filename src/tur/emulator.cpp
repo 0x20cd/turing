@@ -74,6 +74,12 @@ void Emulator::step()
 }
 
 
+quint32 Emulator::symnull() const
+{
+    return m_symnull;
+}
+
+
 quint32 Emulator::state() const
 {
     return m_state;
