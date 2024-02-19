@@ -59,6 +59,9 @@ void Loader::loadTape(QString input, int carPos)
     auto input_list = input.toUcs4();
     decltype(m_emu.m_tape) tape(input_list.begin(), input_list.end());
 
+    if (tape.empty())
+        tape.push_back(m_emu.m_symnull);
+
     m_emu.m_tape = std::move(tape);
 
     m_emu.m_car = carPos >= 0 ? m_emu.m_tape.begin() : m_emu.m_tape.end();
@@ -74,8 +77,10 @@ QString Loader::readTape(bool trim) const
     auto begin = m_emu.m_tape.begin(), end = m_emu.m_tape.end();
 
     if (trim) {
-        while (*begin == m_emu.m_symnull) ++begin;
-        while (*(--end) == m_emu.m_symnull);
+        while (begin != end && *begin == m_emu.m_symnull) ++begin;
+        if (begin == end)
+            return QString();
+        while (end != begin && *(--end) == m_emu.m_symnull);
         ++end;
     }
 
