@@ -1,3 +1,4 @@
+#include <iterator>
 #include "tur/emulator.hpp"
 using tur::Emulator;
 
@@ -106,4 +107,10 @@ const decltype(Emulator::m_states)& Emulator::states() const
 decltype(Emulator::m_tape.cbegin()) Emulator::carriage() const
 {
     return m_car;
+}
+
+
+int Emulator::carriagePos() const
+{
+    return std::distance<decltype(m_tape.cbegin())>(m_tape.cbegin(), m_car);
 }

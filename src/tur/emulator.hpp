@@ -51,6 +51,7 @@ namespace tur {
         const decltype(m_symbols)& symbols() const;
         const decltype(m_states)& states() const;
         decltype(Emulator::m_tape.cbegin()) carriage() const;
+        int carriagePos() const;
     };
 }
 
