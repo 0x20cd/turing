@@ -22,7 +22,14 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="3" column="0">
-     <widget class="QTableWidget" name="table"/>
+     <widget class="QTableWidget" name="table">
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::NoSelection</enum>
+      </property>
+     </widget>
     </item>
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="tape">
@@ -196,7 +203,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="horizontalSlider">
+         <widget class="QSlider" name="speedSlider">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -215,14 +222,8 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
           <property name="maximum">
-           <number>200</number>
-          </property>
-          <property name="value">
-           <number>100</number>
+           <number>10000</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -248,9 +249,12 @@
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="actionOpen"/>
+    <addaction name="actionLoadProgram"/>
+    <addaction name="separator"/>
     <addaction name="actionLoadTape"/>
     <addaction name="actionSaveTape"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -259,7 +263,7 @@
     <bool>true</bool>
    </property>
   </widget>
-  <action name="actionOpen">
+  <action name="actionLoadProgram">
    <property name="text">
     <string>Загрузить программу</string>
    </property>
@@ -272,6 +276,11 @@
   <action name="actionSaveTape">
    <property name="text">
     <string>Сохранить ленту</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Выход</string>
    </property>
   </action>
  </widget>
