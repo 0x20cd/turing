@@ -64,3 +64,25 @@ void Loader::loadTape(QString input, int carPos)
     m_emu.m_car = carPos >= 0 ? m_emu.m_tape.begin() : m_emu.m_tape.end();
     std::advance(m_emu.m_car, carPos);
 }
+
+
+QString Loader::readTape(bool trim) const
+{
+    if (m_emu.m_tape.empty())
+        return QString();
+
+    auto begin = m_emu.m_tape.begin(), end = m_emu.m_tape.end();
+
+    if (trim) {
+        while (*begin == m_emu.m_symnull) ++begin;
+        while (*(--end) == m_emu.m_symnull);
+        ++end;
+    }
+
+    QString output;
+
+    while (begin != end)
+        output.append(QString::fromUcs4((char32_t*)&(*begin++), 1));
+
+    return output;
+}

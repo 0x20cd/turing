@@ -14,6 +14,7 @@ namespace tur
         Loader(Emulator &emu);
         bool loadTable(QString desc);
         void loadTape(QString input, int carPos = 0);
+        QString readTape(bool trim = true) const;
     };
 }
 
