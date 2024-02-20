@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , loader(emu)
+//    , tableModel(emu)
     , labelStatus(new QLabel(this))
     , playIcon(":/res/play.png")
     , pauseIcon(":/res/pause.png")
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->speedSlider->setValue(5000);
 
     statusBar()->addWidget(labelStatus);
+
     setStatus(NOTREADY);
 
     QObject::connect(&stepTimer, &QTimer::timeout, this, &MainWindow::makeStep);
@@ -121,7 +123,42 @@ void MainWindow::updateCellValues()
 
 void MainWindow::updateTable()
 {
+    const auto &states = emu.states();
+    const auto &symbols = emu.symbols();
 
+    ui->table->clear();
+    ui->table->setColumnCount(states.size());
+    ui->table->setRowCount(symbols.size());
+
+    int index = 0;
+    for (const uint32_t &state : states)
+        ui->table->setHorizontalHeaderItem(index++, new QTableWidgetItem(QString::number(state)));
+
+    index = 0;
+    for (const uint32_t &symbol : symbols) {
+        QString sym = (symbol ? QString::fromUcs4((char32_t*)&symbol, 1) : "NULL");
+        ui->table->setVerticalHeaderItem(index++, new QTableWidgetItem(sym));
+    }
+
+
+    int row = 0, column = 0;
+
+    for (const uint32_t symbol : symbols) {
+        column = 0;
+        for (const uint32_t state : states) {
+            auto *tr = emu.getRule(tur::Condition{.state = state, .symbol = symbol});
+            if (!tr) continue;
+
+            QString format = tr->symbol == '"' ? "%1 '%2' %3" : "%1 \"%2\" %3";
+            ui->table->setCellWidget(row, column, new QLabel(
+                format.arg(tr->state)
+                      .arg(QString::fromUcs4((char32_t*)&tr->symbol, 1))
+                      .arg((char)tr->direction),
+                nullptr));
+            ++column;
+        }
+        ++row;
+    }
 }
 
 void MainWindow::makeStep()
@@ -161,6 +198,7 @@ void MainWindow::setStatus(Status status)
         ui->buttonReset->setEnabled(false);
         ui->buttonStep->setEnabled(false);
     } else {
+//        ui->table->setModel(&tableModel);
         ui->buttonPlayPause->setEnabled(status != HALTED);
         ui->buttonReset->setEnabled(status != RUNNING);
         ui->buttonStep->setEnabled(status != RUNNING && status != HALTED);
@@ -211,8 +249,9 @@ void MainWindow::on_actionLoadProgram_triggered()
         return;
     }
 
-    setStatus(READY);
     updateTable();
+
+    setStatus(READY);
     labelStatus->setText(filename);
 }
 

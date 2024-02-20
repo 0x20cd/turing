@@ -5,6 +5,8 @@
 #include <QLabel>
 #include <QTimer>
 #include <QIcon>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include "tur/emulator.hpp"
 #include "tur/loader.hpp"
 
@@ -43,6 +45,7 @@ private:
     Ui::MainWindow *ui;
     tur::Emulator emu;
     tur::Loader loader;
+//    TableModel tableModel;
     virtual void resizeEvent(QResizeEvent *event) override;
     static QString sym_repr(char32_t sym);
     QLabel *labelStatus;

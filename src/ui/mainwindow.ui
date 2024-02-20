@@ -21,16 +21,6 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="3" column="0">
-     <widget class="QTableWidget" name="table">
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
-      <property name="selectionMode">
-       <enum>QAbstractItemView::NoSelection</enum>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="tape">
       <property name="spacing">
@@ -228,11 +218,30 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
+          <property name="tickPosition">
+           <enum>QSlider::TicksAbove</enum>
+          </property>
+          <property name="tickInterval">
+           <number>1000</number>
+          </property>
          </widget>
         </item>
        </layout>
       </item>
      </layout>
+    </item>
+    <item row="3" column="0">
+     <widget class="QTableWidget" name="table">
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="verticalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerPixel</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
