@@ -42,13 +42,12 @@ namespace tur {
         void reset();
         bool addRule(const Condition &cond, const Transition &tr);
         void step();
-
         void moveCarriage(Direction move);
 
         quint32 symnull() const;
         quint32 state() const;
         const decltype(m_tape)& tape() const;
-        const decltype(m_table)& table() const;
+        const Transition* getRule(const Condition &cond) const;
         const decltype(m_symbols)& symbols() const;
         const decltype(m_states)& states() const;
         decltype(Emulator::m_tape.cbegin()) carriage() const;

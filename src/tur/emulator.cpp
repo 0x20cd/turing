@@ -31,7 +31,11 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
         return false;
 
     m_symbols.insert(cond.symbol);
+    m_symbols.insert(tr.symbol);
+
     m_states.insert(cond.state);
+    if (tr.state != STATE_END)
+        m_states.insert(tr.state);
 
     m_table.insert(key, tr);
     return true;
@@ -92,9 +96,13 @@ const decltype(Emulator::m_tape)& Emulator::tape() const
 }
 
 
-const decltype(Emulator::m_table)& Emulator::table() const
+const tur::Transition* Emulator::getRule(const Condition &cond) const
 {
-    return m_table;
+    const quint64 &key = *(quint64*)(&cond);
+    if (!m_table.contains(key))
+        return nullptr;
+
+    return &(*m_table.find(key));
 }
 
 
