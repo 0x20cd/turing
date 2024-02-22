@@ -16,7 +16,6 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , loader(emu)
-//    , tableModel(emu)
     , labelStatus(new QLabel(this))
     , playIcon(":/res/play.png")
     , pauseIcon(":/res/pause.png")
@@ -166,6 +165,11 @@ void MainWindow::updateTable()
     }
 }
 
+void MainWindow::updateCurrentState()
+{
+    ui->labelState->setText(QString::number(emu.state()));
+}
+
 void MainWindow::makeStep()
 {
     if (status == NOTREADY || status == HALTED)
@@ -183,6 +187,7 @@ void MainWindow::makeStep()
         setStatus(PAUSED);
 
     updateCellValues();
+    updateCurrentState();
 
     if (emu.state() == tur::STATE_END)
         setStatus(HALTED);
@@ -235,6 +240,7 @@ void MainWindow::on_buttonReset_clicked()
     setStatus(READY);
 
     updateCellValues();
+    updateCurrentState();
 }
 
 
@@ -255,6 +261,7 @@ void MainWindow::on_actionLoadProgram_triggered()
     }
 
     updateTable();
+    updateCurrentState();
 
     setStatus(READY);
     labelStatus->setText(filename);

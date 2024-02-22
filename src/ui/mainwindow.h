@@ -35,6 +35,7 @@ private slots:
     void updateCellCount();
     void updateCellValues();
     void updateTable();
+    void updateCurrentState();
     void makeStep();
     void setStatus(Status status);
 
