@@ -64,10 +64,15 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::updateCellCount()
 {
     int left, right;
-    ui->gridLayout->getContentsMargins(&left, nullptr, &right, nullptr);
+    /*ui->gridLayout->getContentsMargins(&left, nullptr, &right, nullptr);
     int hspacing = ui->tape->spacing();
     int tapeWidth = size().width() - (left + right);
-    int count = ui->tape->count(), newCount = (tapeWidth + hspacing - 1) / (Cell::CELL_SIZE + hspacing);
+    int count = ui->tape->count(), newCount = (tapeWidth + hspacing - 1) / (Cell::CELL_SIZE + hspacing);*/
+    //int tapeWidth = ui->tapeBox->width();
+    ui->gridLayout->getContentsMargins(&left, nullptr, &right, nullptr);
+    int tapeWidth = size().width() - (left + right);
+    int hspacing = ui->tape->spacing();
+    int count = ui->tape->count(), newCount = (tapeWidth + hspacing - 20) / (Cell::CELL_SIZE + hspacing);
 
     while (count < newCount) {
         auto *cell = new Cell(this);
