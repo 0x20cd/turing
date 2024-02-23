@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <QLabel>
 #include <cmath>
+#include <cwctype>
 #include "mainwindow.h"
 #include "cell.h"
 #include "ui_mainwindow.h"
@@ -50,9 +51,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-QString MainWindow::sym_repr(char32_t sym)
+QString MainWindow::sym_repr(char32_t sym, bool useCodes, bool useQuotes)
 {
-    return sym == 0 ? QString() : QString::fromUcs4(&sym, 1);
+    if (std::iswprint(sym)) {
+        QString c = QString::fromUcs4(&sym, 1);
+        if (!useQuotes)
+            return c;
+        return sym == '"' ? "'\"'" : QString("\"%1\"").arg(c);
+    }
+
+    if (useCodes)
+        return QString("U+") + QString::number(sym, 16);
+    return QString();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -97,13 +107,12 @@ void MainWindow::updateCellValues()
     int carCellIndex = cellsCount / 2;
 
     char32_t symnull = emu.symnull();
-    QString symnull_repr = sym_repr(symnull);
 
     //qDebug() << loader.readTape();
 
     for (index = 0; index < cellsCount; ++index) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
-        cell->setText(symnull_repr);
+        cell->setText(sym_repr(symnull));
         cell->setSelected(false);
     }
 
@@ -111,7 +120,7 @@ void MainWindow::updateCellValues()
 
     for (it = car, index = carCellIndex; ++it != tape.end() && ++index < cellsCount; ) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
-        cell->setText(QString::fromUcs4((char32_t*)&(*it), 1));
+        cell->setText(sym_repr(*it));
     }
 
     dynamic_cast<Cell*>(ui->tape->itemAt(carCellIndex)->widget())->setSelected();
@@ -140,8 +149,7 @@ void MainWindow::updateTable()
 
     index = 0;
     for (const uint32_t &symbol : symbols) {
-        QString sym = (symbol ? QString::fromUcs4((char32_t*)&symbol, 1) : "NULL");
-        ui->table->setVerticalHeaderItem(index++, new QTableWidgetItem(sym));
+        ui->table->setVerticalHeaderItem(index++, new QTableWidgetItem(sym_repr(symbol, true)));
     }
 
 
@@ -153,10 +161,11 @@ void MainWindow::updateTable()
             auto *tr = emu.getRule(tur::Condition{.state = state, .symbol = symbol});
             if (!tr) continue;
 
-            QString format = tr->symbol == '"' ? "%1 '%2' %3" : "%1 \"%2\" %3";
+
             ui->table->setCellWidget(row, column, new QLabel(
-                format.arg(tr->state)
-                      .arg(QString::fromUcs4((char32_t*)&tr->symbol, 1))
+                QString("%1, %2, %3")
+                      .arg(tr->state)
+                      .arg(sym_repr(tr->symbol, true, true))
                       .arg((char)tr->direction),
                 nullptr));
             ++column;
@@ -261,6 +270,7 @@ void MainWindow::on_actionLoadProgram_triggered()
     }
 
     updateTable();
+    updateCellValues();
     updateCurrentState();
 
     setStatus(READY);

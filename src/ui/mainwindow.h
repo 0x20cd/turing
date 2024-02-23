@@ -48,7 +48,7 @@ private:
     tur::Loader loader;
 //    TableModel tableModel;
     virtual void resizeEvent(QResizeEvent *event) override;
-    static QString sym_repr(char32_t sym);
+    static QString sym_repr(char32_t sym, bool useCodes = false, bool useQuotes = false);
     QLabel *labelStatus;
     QTimer stepTimer;
     QIcon playIcon, pauseIcon;

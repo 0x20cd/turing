@@ -12,7 +12,7 @@ namespace tur
         QRegularExpression m_regex;
     public:
         Loader(Emulator &emu);
-        bool loadTable(QString desc);
+        bool loadTable(QString desc, bool preserveTape = true);
         void loadTape(QString input, int carPos = 0);
         QString readTape(bool trim = true) const;
     };

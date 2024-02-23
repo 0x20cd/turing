@@ -33,7 +33,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>120</width>
+          <width>150</width>
           <height>0</height>
          </size>
         </property>
@@ -42,6 +42,9 @@
           <width>120</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(0, 0, 0);</string>
         </property>
         <property name="text">
          <string>Текущее состояние:</string>
@@ -58,7 +61,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>80</width>
+          <width>50</width>
           <height>0</height>
          </size>
         </property>
@@ -67,6 +70,9 @@
           <width>80</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(0, 0, 0);</string>
         </property>
         <property name="text">
          <string/>
@@ -321,6 +327,9 @@
       <property name="editTriggers">
        <set>QAbstractItemView::NoEditTriggers</set>
       </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::NoSelection</enum>
+      </property>
       <property name="verticalScrollMode">
        <enum>QAbstractItemView::ScrollPerPixel</enum>
       </property>
@@ -337,7 +346,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

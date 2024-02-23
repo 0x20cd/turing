@@ -12,7 +12,7 @@ Loader::Loader(Emulator &emu)
 }
 
 
-bool Loader::loadTable(QString desc)
+bool Loader::loadTable(QString desc, bool preserveTape)
 {
     tur::Emulator emu;
 
@@ -47,6 +47,11 @@ bool Loader::loadTable(QString desc)
         tr.direction = static_cast<tur::Direction>(match.captured(9)[0].toLatin1());
 
         emu.addRule(cond, tr);
+    }
+
+    if (preserveTape) {
+        emu.m_tape = std::move(m_emu.m_tape);
+        emu.m_car = m_emu.m_car;
     }
 
     m_emu = std::move(emu);
