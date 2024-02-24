@@ -25,6 +25,9 @@ qt_add_executable(app-tm-emu
     ${PROJECT_SOURCES}
 )
 
+find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
+qt_add_translations(app-tm-emu TS_FILES turing_ru.ts)
+
 target_link_libraries(app-tm-emu PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 target_include_directories(app-tm-emu PRIVATE

@@ -47,7 +47,7 @@
          <string notr="true">color: rgb(0, 0, 0);</string>
         </property>
         <property name="text">
-         <string>Текущее состояние:</string>
+         <string>Current state:</string>
         </property>
        </widget>
       </item>
@@ -218,7 +218,7 @@
            <enum>QFrame::NoFrame</enum>
           </property>
           <property name="text">
-           <string>Скорость</string>
+           <string>Speed</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -351,7 +351,7 @@
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
-     <string>Файл</string>
+     <string>File</string>
     </property>
     <addaction name="actionLoadProgram"/>
     <addaction name="separator"/>
@@ -369,22 +369,22 @@
   </widget>
   <action name="actionLoadProgram">
    <property name="text">
-    <string>Загрузить программу</string>
+    <string>Load Program</string>
    </property>
   </action>
   <action name="actionLoadTape">
    <property name="text">
-    <string>Загрузить ленту</string>
+    <string>Load Tape</string>
    </property>
   </action>
   <action name="actionSaveTape">
    <property name="text">
-    <string>Сохранить ленту</string>
+    <string>Save Tape</string>
    </property>
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Выход</string>
+    <string>Quit</string>
    </property>
   </action>
  </widget>
