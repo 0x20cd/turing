@@ -1,6 +1,7 @@
 #include <iterator>
 #include "tur/emulator.hpp"
 using tur::Emulator;
+using tur::NoRuleError;
 
 Emulator::Emulator(quint32 symnull)
     : m_symnull(symnull)
@@ -51,7 +52,7 @@ void Emulator::step()
     const quint64 &key = *(quint64*)(&cond);
 
     if (!m_table.contains(key))
-        throw std::runtime_error("Behaviour is not defined for current state");
+        throw NoRuleError();
 
     auto &tr = m_table[key];
 
@@ -128,3 +129,6 @@ int Emulator::carriagePos() const
 {
     return std::distance<decltype(m_tape.cbegin())>(m_tape.cbegin(), m_car);
 }
+
+
+NoRuleError::NoRuleError() : std::runtime_error("Behaviour is not defined for current state") {}

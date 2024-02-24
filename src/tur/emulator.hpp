@@ -53,6 +53,11 @@ namespace tur {
         decltype(Emulator::m_tape.cbegin()) carriage() const;
         int carriagePos() const;
     };
+
+    class NoRuleError : std::runtime_error {
+    public:
+        NoRuleError();
+    };
 }
 
 #endif // TUR_EMULATOR_HPP
