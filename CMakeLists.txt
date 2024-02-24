@@ -18,6 +18,7 @@ set(PROJECT_SOURCES
     src/tur/loader.hpp src/tur/loader.cpp
     src/ui/mainwindow.ui src/ui/mainwindow.h src/ui/mainwindow.cpp
     src/ui/cell.h src/ui/cell.cpp
+    src/mathexpr/mathexpr.hpp src/mathexpr/mathexpr.cpp
 )
 
 qt_add_executable(app-tm-emu
