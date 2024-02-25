@@ -408,6 +408,9 @@ int64_t intpow(int64_t a, int64_t b)
     if (a == 1 || b == 0)
         return 1;
 
+    if (b == 1)
+        return a;
+
     if (a == 0)
         return 0;
 
