@@ -8,13 +8,18 @@ const int Expression::NB_GROUPS = 3;
 Number::Number(int64_t value, bool neg)
 	: m_value(value)
 {
-    if (neg) m_value *= -1;
+    this->inv_sign(neg);
 }
 
 
 int64_t Number::eval(const IEvaluable::vars_t*)
 {
 	return this->m_value;
+}
+
+void Number::inv_sign(bool neg)
+{
+    if (neg) this->m_value *= -1;
 }
 
 
@@ -38,6 +43,11 @@ int64_t Variable::eval(const IEvaluable::vars_t *vars)
     if (this->m_neg) res *= -1;
 
 	return res;
+}
+
+void Variable::inv_sign(bool neg)
+{
+    this->m_neg = (this->m_neg != neg);
 }
 
 
@@ -125,7 +135,7 @@ std::vector<Expression::Token> Expression::tokenize(std::string_view expr)
 }
 
 
-std::shared_ptr<IEvaluable> Expression::next_val(std::vector<Token>::iterator &it_ref, std::vector<Token>::iterator end)
+std::shared_ptr<IEvaluable> Expression::next_val(std::vector<Token>::iterator &it_ref, std::vector<Token>::iterator end, bool &neg_out)
 {
     bool neg = false;
     auto it = it_ref;
@@ -170,14 +180,15 @@ std::shared_ptr<IEvaluable> Expression::next_val(std::vector<Token>::iterator &i
             };
 
         ret = std::shared_ptr<Expression>(new Expression(expr_begin, it++, neg));
+        neg = false;
         break;
 
     case Token::Num:
-        ret = std::make_shared<Number>(std::get<int64_t>((it++)->value), neg);
+        ret = std::make_shared<Number>(std::get<int64_t>((it++)->value));
         break;
 
     case Token::Var:
-        ret = std::make_shared<Variable>(std::get<std::string>((it++)->value), neg);
+        ret = std::make_shared<Variable>(std::get<std::string>((it++)->value));
         break;
 
     default:
@@ -187,6 +198,7 @@ std::shared_ptr<IEvaluable> Expression::next_val(std::vector<Token>::iterator &i
     }
 
     it_ref = it;
+    neg_out = neg;
     return ret;
 }
 
@@ -279,6 +291,7 @@ Expression::Expression(std::vector<Token>::iterator begin, std::vector<Token>::i
 
     std::shared_ptr<IEvaluable> val;
     Operator op;
+    bool neg_unary;
 
     for (int i = 0; i < NB_GROUPS; ++i) {
         groups[i] = std::shared_ptr<Expression>(new Expression());
@@ -286,7 +299,7 @@ Expression::Expression(std::vector<Token>::iterator begin, std::vector<Token>::i
     }
 
     for (auto it = begin; it != end; g0 = g) {
-        val = next_val(it, end);
+        val = next_val(it, end, neg_unary);
         op = next_op(it, end);
 
         g = op.group;
@@ -295,8 +308,16 @@ Expression::Expression(std::vector<Token>::iterator begin, std::vector<Token>::i
             stack.push_back(g0);
             groups[g] = std::shared_ptr<Expression>(new Expression());
             groups[g]->m_right_assoc = IS_RIGHT_ASSOC[g];
+
+            if (g == 2) {
+                groups[g]->inv_sign(neg_unary);
+            } else {
+                val->inv_sign(neg_unary);
+            }
         }
         else if (g0 > g) {
+            val->inv_sign(neg_unary);
+
             groups[g0]->m_values.push_back(val);
             val = groups[g0];
             while(!stack.empty() && (gt = stack.back()) > g) {
@@ -327,7 +348,7 @@ Expression::Expression(std::vector<Token>::iterator begin, std::vector<Token>::i
         this->m_values.push_back(val);
     }
 
-    this->m_neg = (this->m_neg != neg);
+    this->inv_sign(neg);
 }
 
 
@@ -362,6 +383,13 @@ int64_t Expression::eval(const IEvaluable::vars_t *vars)
     return res;
 }
 
+
+void Expression::inv_sign(bool neg)
+{
+    this->m_neg = (this->m_neg != neg);
+}
+
+
 int64_t intpow(int64_t a, int64_t b)
 {
 	static int64_t MAX_BASE[63] = {
@@ -374,7 +402,7 @@ int64_t intpow(int64_t a, int64_t b)
 		  2,  2,          2,       2,     2,    2,    2,   2,   2
 	};
 
-    if (a < 0 || b < 0)
+    if (b < 0)
         throw EvalError();
 
     if (a == 1 || b == 0)
@@ -386,7 +414,7 @@ int64_t intpow(int64_t a, int64_t b)
     if (b >= std::size(MAX_BASE))
         throw EvalError();
 
-    if (a > MAX_BASE[b])
+    if (a > MAX_BASE[b] || a < -MAX_BASE[b])
         throw EvalError();
 
 	int64_t res = 1, part = a;
