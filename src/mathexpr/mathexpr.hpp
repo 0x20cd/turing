@@ -3,29 +3,33 @@
 #include <string>
 #include <string_view>
 #include <variant>
-#include <map>
+#include <unordered_map>
 #include <cctype>
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include <iostream>
 
-
-struct ExprError {};
+struct ExprError {
+    const char *what;
+    int pos;
+};
+struct EvalError {};
 
 
 class IEvaluable
 {
 public:
-	using vars_t = std::map<std::string, int64_t>;
-	virtual int64_t eval(const IEvaluable::vars_t &vars) = 0;
+    using vars_t = std::unordered_map<std::string, int64_t>;
+    virtual int64_t eval(const IEvaluable::vars_t *vars) = 0;
 };
 
 
 class Number : public IEvaluable
 {
 public:
-	Number(int64_t value);
-	int64_t eval(const IEvaluable::vars_t &vars) override;
+    Number(int64_t value, bool neg = false);
+    int64_t eval(const IEvaluable::vars_t *vars) override;
 private:
 	int64_t m_value;
 };
@@ -35,7 +39,7 @@ class Variable : public IEvaluable
 {
 public:
 	Variable(const std::string &name, bool neg = false);
-	int64_t eval(const IEvaluable::vars_t &vars) override;
+    int64_t eval(const IEvaluable::vars_t *vars) override;
 private:
 	std::string m_name;
 	bool m_neg;
@@ -46,11 +50,9 @@ class Expression : public IEvaluable
 {
 public:
 	Expression(std::string_view expr);
-	int64_t eval(const IEvaluable::vars_t &vars) override;
+    int64_t eval(const IEvaluable::vars_t *vars) override;
 
 private:
-	Expression(std::vector<Token>::iterator begin, std::vector<Token>::iterator end);
-
 	struct Token {
 		enum Type { None, Var, Num, Plus, Minus, Mul, Div, Mod, Pow, ParL, ParR } type;
 		std::variant<std::string, int64_t> value;
@@ -58,13 +60,18 @@ private:
 
 	struct Operator {
 		Token::Type type;
-		int group;
-		bool right_assoc;
-	}
+        int group;
+    };
 
-	static bool next_val(std::vector<Token>::iterator &it, std::shared_ptr<IEvaluable> &out);
-	static bool next_op(std::vector<Token>::iterator &it, Operator &out);
-	static std::vector<Token> tokenize(std::string_view expr);
+    static const int NB_GROUPS;
+
+    static std::shared_ptr<IEvaluable> next_val(std::vector<Token>::iterator &it, std::vector<Token>::iterator end);
+    static Operator next_op(std::vector<Token>::iterator &it, std::vector<Token>::iterator end);
+    static std::vector<Token> tokenize(std::string_view expr);
+    static int64_t eval_op(int64_t lhs, Operator op, int64_t rhs);
+
+    Expression();
+    Expression(std::vector<Token>::iterator begin, std::vector<Token>::iterator end, bool neg = false);
 
 	std::vector<std::shared_ptr<IEvaluable>> m_values;
 	std::vector<Operator> m_ops;
@@ -72,7 +79,7 @@ private:
 };
 
 
-bool intpow(int64_t a, int64_t b, int64_t &out);
+int64_t intpow(int64_t a, int64_t b);
 
 
 #endif//MATHEXPR_HPP
