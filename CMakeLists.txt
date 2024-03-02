@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(app-tm-emu VERSION 0.1 LANGUAGES CXX)
+project(app-turing VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,21 +20,21 @@ set(PROJECT_SOURCES
     src/ui/cell.h src/ui/cell.cpp
 )
 
-qt_add_executable(app-tm-emu
+qt_add_executable(app-turing
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
 )
 
 find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
-qt_add_translations(app-tm-emu TS_FILES turing_ru.ts)
+qt_add_translations(app-turing TS_FILES turing_ru.ts)
 
-target_link_libraries(app-tm-emu PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(app-turing PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-target_include_directories(app-tm-emu PRIVATE
+target_include_directories(app-turing PRIVATE
     src
 )
 
-set_target_properties(app-tm-emu PROPERTIES
+set_target_properties(app-turing PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -42,12 +42,12 @@ set_target_properties(app-tm-emu PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS app-tm-emu
+install(TARGETS app-turing
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(app-tm-emu)
+    qt_finalize_executable(app-turing)
 endif()
