@@ -42,7 +42,6 @@ namespace tur {
         void reset();
         bool addRule(const Condition &cond, const Transition &tr);
         void step();
-        void moveCarriage(Direction move);
 
         quint32 symnull() const;
         quint32 state() const;

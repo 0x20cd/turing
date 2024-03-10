@@ -16,6 +16,8 @@ set(PROJECT_SOURCES
     src/main.cpp res.qrc
     src/tur/emulator.hpp src/tur/emulator.cpp
     src/tur/loader.hpp src/tur/loader.cpp
+    src/tur/tokenizer.hpp src/tur/tokenizer.cpp
+    src/tur/common.hpp
     src/ui/mainwindow.ui src/ui/mainwindow.h src/ui/mainwindow.cpp
     src/ui/cell.h src/ui/cell.cpp
 )
