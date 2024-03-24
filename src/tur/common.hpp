@@ -8,6 +8,10 @@ namespace tur
 {
     using number_t = qint64;
 
+    struct SourceRef {
+        long row, col;
+    };
+
     struct Token {
         enum Type {
             NONE, KW_A, KW_Q, KW_NULL, KW_START, KW_END, KW_N, KW_L, KW_R,
@@ -16,6 +20,7 @@ namespace tur
             PLUS, MINUS, MUL, DIV, MOD, POW, ID, NUMBER, STRING
         } type;
 
+        SourceRef srcRef;
         QVariant value;
     };
 }

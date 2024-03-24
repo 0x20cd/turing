@@ -16,7 +16,9 @@ namespace tur {
         static Token nextLiteral(QStringView tail, QString::const_iterator &it);
     };
 
-    class TokenizerError {};
+    struct TokenizerError {
+        SourceRef srcRef;
+    };
 }
 
 #endif // TUR_TOKENIZER_HPP

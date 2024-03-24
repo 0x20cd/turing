@@ -18,15 +18,26 @@ QList<Token> Tokenizer::tokenize(QString source)
 
     QList<Token> chain;
 
-    auto it = source.cbegin();
+    auto it = source.cbegin(), row_begin = source.cbegin(), tok_begin = source.cbegin();
+    int row = 1;
 
     while (true)
     {
-        while (it != source.cend() && it->isSpace()) ++it;
+        while (it != source.cend() && it->isSpace()) {
+            if (*(it++) == '\n') {
+                row_begin = it;
+                ++row;
+            }
+        }
 
         if (it == source.cend())
             break;
 
+        tok_begin = it;
+        SourceRef srcRef {
+            .row = row,
+            .col = tok_begin - row_begin
+        };
         QStringView tail(&(*it), source.cend() - it);
 
         Token::Type type = Token::NONE;
@@ -43,16 +54,26 @@ QList<Token> Tokenizer::tokenize(QString source)
         }
 
         if (type != Token::NONE) {
-            chain.push_back(Token{.type = type});
+            chain.push_back(Token {
+                .type = type,
+                .srcRef = srcRef
+            });
             continue;
         }
 
         QString name = nextName(tail, it);
         if (!name.isNull()) {
             if (KEYWORDS.contains(name)) {
-                chain.push_back(Token{.type = KEYWORDS.value(name)});
+                chain.push_back(Token{
+                    .type = KEYWORDS.value(name),
+                    .srcRef = srcRef
+                });
             } else {
-                chain.push_back(Token{.type = Token::ID, .value = name});
+                chain.push_back(Token{
+                    .type = Token::ID,
+                    .srcRef = srcRef,
+                    .value = name,
+                });
             }
 
             continue;
@@ -60,11 +81,12 @@ QList<Token> Tokenizer::tokenize(QString source)
 
         Token token = nextLiteral(tail, it);
         if (token.type != Token::NONE) {
+            token.srcRef = srcRef;
             chain.push_back(token);
             continue;
         }
 
-        throw TokenizerError();
+        throw TokenizerError{.srcRef = srcRef};
     }
 
     return chain;
