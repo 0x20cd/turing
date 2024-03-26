@@ -247,9 +247,15 @@ number_t Expression::pow(safe<number_t> a, safe<number_t> b)
 
     safe<number_t> res = 1, part = a;
 
-    for (uintmax_t bits = b; bits; bits >>= 1, part *= part) {
+    uintmax_t bits = b;
+    while (true) {
         if (bits & 1)
             res *= part;
+        bits >>= 1;
+
+        if (!bits) break;
+
+        part *= part;
     }
 
     return res;
