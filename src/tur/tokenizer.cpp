@@ -36,7 +36,7 @@ QList<Token> Tokenizer::tokenize(QString source)
         tok_begin = it;
         SourceRef srcRef {
             .row = row,
-            .col = tok_begin - row_begin
+            .col = tok_begin - row_begin + 1
         };
         QStringView tail(&(*it), source.cend() - it);
 
