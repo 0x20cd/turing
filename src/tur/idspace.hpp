@@ -18,15 +18,26 @@ namespace tur::id
         SourceRef srcRef;
     };
 
+
     template <typename T>
-    class Range {
+    class IArray
+    {
+    public:
+        virtual uint64_t size() const = 0;
+        virtual T operator[](uint64_t i) const = 0;
+        virtual ~IArray() = default;
+    };
+
+    template <typename T>
+    class Range : public IArray<T> {
     public:
         Range(T first, T last);
 
         bool next(T &value) const;
         bool contains(T value) const;
         uint64_t pos(T value) const;
-        uint64_t size() const;
+        virtual uint64_t size() const override;
+        virtual T operator[](uint64_t i) const override;
         T first() const;
         T last() const;
 
@@ -37,17 +48,17 @@ namespace tur::id
     };
 
 
+    using id_t = quint32;
     using name_t = QString;
-
     using index_t = number_t;
+
     using idx_t = QList<index_t>;
     using idxrange_t = Range<index_t>;
     using idxranges_t = QList<idxrange_t>;
     using shape_t = idxranges_t;
 
-    using id_t = quint32;
     using sym_t = quint32;
-    using strval_t = QList<sym_t>;
+    using istring_t = IArray<sym_t>;
     using symrange_t = Range<sym_t>;
 
     class IndexRangeCat {
@@ -116,13 +127,30 @@ namespace tur::id
     };
 
 
-    class StringCat
+
+    class StringValue : public istring_t
+    {
+    public:
+        StringValue(QString str);
+
+        virtual uint64_t size() const override;
+        virtual sym_t operator[](uint64_t i) const override;
+    private:
+        QList<sym_t> value;
+    };
+
+
+    class StringCat : public istring_t
     {
     public:
         StringCat();
-        sym_t operator[](size_t i) const;
+        void append(const std::shared_ptr<istring_t> &str);
+
+        virtual uint64_t size() const override;
+        virtual sym_t operator[](uint64_t i) const override;
     private:
-        QList<std::variant<strval_t, symrange_t>> strings;
+        quint64 m_size;
+        QList<std::shared_ptr<istring_t>> strings;
     };
 
 

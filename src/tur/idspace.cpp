@@ -62,6 +62,16 @@ uint64_t Range<T>::size() const
 }
 
 template <typename T>
+T Range<T>::operator[](uint64_t i) const
+{
+    return (
+        this->is_inv
+        ? m_first - i
+        : m_first + i
+    );
+}
+
+template <typename T>
 T Range<T>::first() const
 {
     return m_first;
@@ -201,7 +211,7 @@ IdRef IdSpace::getRef(id_t id) const
 
     quint64 pos = id - base_id;
     for (auto it = desc.shape.crbegin(); it != desc.shape.crend(); ++it) {
-        ref.idx.push_front(it->first() + pos % it->size());
+        ref.idx.push_front((*it)[pos % it->size()]);
         pos /= it->size();
     }
 
@@ -262,4 +272,55 @@ bool IdSpace::apply_idx(id_t &id, idx_t idx, shape_t shape)
 
     id += pos;
     return true;
+}
+
+
+//////////////////////////////////////////////////
+
+
+StringValue::StringValue(QString str)
+    : value(str.toUcs4())
+{}
+
+uint64_t StringValue::size() const
+{
+    return this->value.size();
+}
+
+sym_t StringValue::operator[](uint64_t i) const
+{
+    return this->value[i];
+}
+
+
+//////////////////////////////////////////////////
+
+
+StringCat::StringCat()
+    : m_size(0)
+{}
+
+void StringCat::append(const std::shared_ptr<istring_t> &str)
+{
+    this->m_size += str->size();
+    this->strings.push_back(str);
+}
+
+uint64_t StringCat::size() const
+{
+    return this->m_size;
+}
+
+sym_t StringCat::operator[](uint64_t i) const
+{
+    if (i >= this->m_size)
+        throw std::logic_error("out of bound");
+
+    auto it = this->strings.cbegin();
+    while (i >= (*it)->size()) {
+        i -= (*it)->size();
+        ++it;
+    }
+
+    return (**it)[i];
 }
