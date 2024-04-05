@@ -5,7 +5,7 @@ QList<Token> Tokenizer::tokenize(QString source)
 {
     static const QHash<QString, Token::Type> KEYWORDS {
         {"A", Token::KW_A}, {"Q", Token::KW_Q}, {"null", Token::KW_NULL}, {"start", Token::KW_START},
-        {"end", Token::KW_END}, {"N", Token::KW_N}, {"L", Token::KW_L}, {"R", Token::KW_R}
+        {"end", Token::KW_END}, {"N", Token::KW_N}, {"L", Token::KW_L}, {"R", Token::KW_R}, {"same", Token::KW_SAME}
     };
 
     static const QHash<QChar, Token::Type> PUNCTS {
