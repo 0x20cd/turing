@@ -77,7 +77,7 @@ namespace tur::id
     bool operator!=(const IndexRangeCat::const_iterator &lhs, const IndexRangeCat::const_iterator &rhs);
 
 
-    struct Ref {
+    struct IdRef {
         name_t name;
         idx_t idx;
     };
@@ -94,10 +94,10 @@ namespace tur::id
         IdSpace(id_t start);
 
         void push(const IdDesc &desc);
-        void setAltId(const Ref &ref, id_t altId);
+        void setAltId(const IdRef &ref, id_t altId);
 
-        id_t getId(const Ref &ref) const;
-        Ref getRef(id_t id) const;
+        id_t getId(const IdRef &ref) const;
+        IdRef getRef(id_t id) const;
 
         bool contains(name_t name) const;
         bool isAlt(id_t id) const;
@@ -106,7 +106,7 @@ namespace tur::id
         id_t stop() const;
 
     private:
-        bool get_id_raw(const Ref &ref, id_t &id_r) const;
+        bool get_id_raw(const IdRef &ref, id_t &id_r) const;
         static bool apply_idx(id_t &id, idx_t idx, shape_t shape);
 
         id_t m_start, m_stop;
@@ -138,7 +138,7 @@ namespace tur::id
     public:
         SymSpace();
         void insert(const SymDesc &desc);
-        sym_t getSym(const Ref &ref);
+        sym_t getSym(const IdRef &ref);
         bool contains(name_t name);
     private:
         QHash<name_t, SymDesc> m_nameToDesc;

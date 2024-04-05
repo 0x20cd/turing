@@ -163,7 +163,7 @@ void IdSpace::push(const IdDesc &desc)
     this->m_stop = stop;
 }
 
-void IdSpace::setAltId(const Ref &ref, id_t altId)
+void IdSpace::setAltId(const IdRef &ref, id_t altId)
 {
     if (!this->isAlt(altId))
         throw std::logic_error("Alternative id must not intersect the id space");
@@ -175,7 +175,7 @@ void IdSpace::setAltId(const Ref &ref, id_t altId)
     this->m_altId.insert(id, altId);
 }
 
-id_t IdSpace::getId(const Ref &ref) const
+id_t IdSpace::getId(const IdRef &ref) const
 {
     id_t id;
     if (!this->get_id_raw(ref, id))
@@ -187,7 +187,7 @@ id_t IdSpace::getId(const Ref &ref) const
     return this->m_altId.value(id);
 }
 
-Ref IdSpace::getRef(id_t id) const
+IdRef IdSpace::getRef(id_t id) const
 {
     if (id < this->m_start || id >= this->m_stop)
         throw std::logic_error("Id is not in the id space");
@@ -196,7 +196,7 @@ Ref IdSpace::getRef(id_t id) const
     id_t base_id = it->first;
     const IdDesc &desc = it->second;
 
-    Ref ref;
+    IdRef ref;
     ref.name = desc.name;
 
     quint64 pos = id - base_id;
@@ -229,7 +229,7 @@ id_t IdSpace::stop() const
 }
 
 
-bool IdSpace::get_id_raw(const Ref &ref, id_t &id_r) const
+bool IdSpace::get_id_raw(const IdRef &ref, id_t &id_r) const
 {
     if (!this->m_nameToId.contains(ref.name))
         return false;
