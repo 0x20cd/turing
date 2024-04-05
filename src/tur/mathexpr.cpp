@@ -44,7 +44,7 @@ number_t Variable::eval(const vars_t *vars)
     try {
         safe<number_t> val = vars->at(this->name);
         return is_neg ? (-val) : val;
-    } catch (boost::safe_numerics::safe_numerics_error) {
+    } catch (const std::exception&) {
         throw EvalError();
     }
 }

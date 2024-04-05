@@ -186,7 +186,7 @@ void MainWindow::makeStep()
 
     try {
         emu.step();
-    } catch (tur::NoRuleError) {
+    } catch (const tur::NoRuleError&) {
         QMessageBox::critical(this, tr("Error"), tr("Behaviour is not defined for current state"));
         setStatus(HALTED);
         return;
