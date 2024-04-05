@@ -18,7 +18,7 @@ void Number::inv_sign()
 }
 
 
-number_t Number::eval(const vars_t*)
+number_t Number::eval(const ctx::context_t*)
 {
     return this->value;
 }
@@ -36,13 +36,13 @@ void Variable::inv_sign()
 }
 
 
-number_t Variable::eval(const vars_t *vars)
+number_t Variable::eval(const ctx::context_t *vars)
 {
     if (!vars || !vars->contains(this->name))
         throw EvalError();
 
     try {
-        safe<number_t> val = vars->at(this->name);
+        safe<number_t> val = vars->value(this->name);
         return is_neg ? (-val) : val;
     } catch (const std::exception&) {
         throw EvalError();
@@ -64,7 +64,7 @@ void Expression::inv_sign()
 }
 
 
-number_t Expression::eval(const IEvaluable::vars_t *vars)
+number_t Expression::eval(const ctx::context_t *vars)
 {
     try {
         safe<number_t> op_res = this->op_fn(this->lhs->eval(vars), this->rhs->eval(vars));

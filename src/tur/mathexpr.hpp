@@ -12,6 +12,7 @@
 #include <QString>
 #include <boost/safe_numerics/safe_integer.hpp>
 #include "tur/common.hpp"
+#include "tur/context.hpp"
 
 namespace tur::math
 {
@@ -27,8 +28,8 @@ namespace tur::math
     class IEvaluable
     {
     public:
-        using vars_t = std::unordered_map<QString, number_t>;
-        virtual number_t eval(const IEvaluable::vars_t *vars = nullptr) = 0;
+
+        virtual number_t eval(const ctx::context_t *vars = nullptr) = 0;
         virtual void inv_sign() = 0;
     };
 
@@ -37,7 +38,7 @@ namespace tur::math
     {
     public:
         Number(number_t value);
-        number_t eval(const IEvaluable::vars_t* = nullptr) override;
+        number_t eval(const ctx::context_t* = nullptr) override;
         void inv_sign() override;
     private:
         number_t value;
@@ -48,7 +49,7 @@ namespace tur::math
     {
     public:
         Variable(const QString &name, bool is_neg = false);
-        number_t eval(const IEvaluable::vars_t *vars = nullptr) override;
+        number_t eval(const ctx::context_t *vars = nullptr) override;
         void inv_sign() override;
     private:
         QString name;
@@ -61,7 +62,7 @@ namespace tur::math
         typedef number_t (*operator_t)(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
     public:
         Expression(std::unique_ptr<IEvaluable> &&lhs, std::unique_ptr<IEvaluable> &&rhs, operator_t op, bool is_neg = false);
-        number_t eval(const IEvaluable::vars_t *vars = nullptr) override;
+        number_t eval(const ctx::context_t *vars = nullptr) override;
         void inv_sign() override;
 
         static std::unique_ptr<IEvaluable> parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);

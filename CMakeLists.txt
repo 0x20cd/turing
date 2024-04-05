@@ -23,6 +23,7 @@ set(PROJECT_SOURCES
     src/ui/mainwindow.ui src/ui/mainwindow.h src/ui/mainwindow.cpp
     src/ui/cell.h src/ui/cell.cpp
     src/tur/idspace.hpp src/tur/idspace.cpp
+    src/tur/context.hpp src/tur/context.cpp
 )
 
 qt_add_executable(app-turing
