@@ -9,6 +9,30 @@ template class Range<index_t>;
 template class Range<sym_t>;
 
 
+static bool idxToPos(idx_t idx, shape_t shape, uint64_t &pos_r)
+{
+    if (idx.size() != shape.size())
+        return false;
+
+    uint64_t pos = 0;
+
+    for (qsizetype i = 0; i < idx.size(); ++i)
+    {
+        if (!shape[i].contains(idx[i]))
+            return false;
+
+        pos *= shape[i].size();
+        pos += shape[i].pos(idx[i]);
+    }
+
+    pos_r = pos;
+    return true;
+}
+
+
+//////////////////////////////////////////////////
+
+
 template <typename T>
 Range<T>::Range(T first, T last)
     : m_first(first)
@@ -156,6 +180,9 @@ IdSpace::IdSpace(id_t start)
 
 void IdSpace::push(const IdDesc &desc)
 {
+    if (this->m_nameToId.contains(desc.name))
+        throw IdInitError{};
+
     id_t id = this->m_stop;
     safe<id_t> stop = id;
     safe<quint64> len = 1;
@@ -180,6 +207,9 @@ void IdSpace::setAltId(const IdRef &ref, id_t altId)
 
     id_t id;
     if (!this->get_id_raw(ref, id))
+        throw IdInitError{};
+
+    if (this->m_altId.contains(id))
         throw IdInitError{};
 
     this->m_altId.insert(id, altId);
@@ -256,19 +286,9 @@ bool IdSpace::get_id_raw(const IdRef &ref, id_t &id_r) const
 
 bool IdSpace::apply_idx(id_t &id, idx_t idx, shape_t shape)
 {
-    if (idx.size() != shape.size())
+    uint64_t pos;
+    if (!idxToPos(idx, shape, pos))
         return false;
-
-    quint64 pos = 0;
-
-    for (qsizetype i = 0; i < idx.size(); ++i)
-    {
-        if (!shape[i].contains(idx[i]))
-            return false;
-
-        pos *= shape[i].size();
-        pos += shape[i].pos(idx[i]);
-    }
 
     id += pos;
     return true;
@@ -323,4 +343,49 @@ sym_t StringCat::operator[](uint64_t i) const
     }
 
     return (**it)[i];
+}
+
+
+//////////////////////////////////////////////////
+
+
+void SymSpace::insert(const SymDesc &desc)
+{
+    if (this->m_nameToDesc.contains(desc.name))
+        throw IdInitError{};
+
+    safe<quint64> len = 1;
+
+    try {
+        for (const idxrange_t &range : desc.shape)
+            len *= range.size();
+    } catch (const std::exception&) {
+        throw IdInitError{};
+    }
+
+    if (desc.value.size() != len)
+        throw IdInitError{};
+
+    this->m_nameToDesc.insert(desc.name, desc);
+}
+
+sym_t SymSpace::getSym(const IdRef &ref) const
+{
+    if (!this->m_nameToDesc.contains(ref.name))
+        throw IdAccessError{};
+
+    const auto &nameToDescConst = this->m_nameToDesc;
+    const SymDesc &desc = nameToDescConst[ref.name];
+
+    uint64_t pos;
+    if (!idxToPos(ref.idx, desc.shape, pos))
+        throw IdAccessError{};
+
+    return desc.value[pos];
+
+}
+
+bool SymSpace::contains(name_t name) const
+{
+    return this->m_nameToDesc.contains(name);
 }

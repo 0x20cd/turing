@@ -164,10 +164,10 @@ namespace tur::id
     class SymSpace
     {
     public:
-        SymSpace();
+        SymSpace() = default;
         void insert(const SymDesc &desc);
-        sym_t getSym(const IdRef &ref);
-        bool contains(name_t name);
+        sym_t getSym(const IdRef &ref) const;
+        bool contains(name_t name) const;
     private:
         QHash<name_t, SymDesc> m_nameToDesc;
     };
