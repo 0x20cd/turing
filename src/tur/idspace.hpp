@@ -5,8 +5,10 @@
 #include <QList>
 #include <QHash>
 #include <variant>
+#include <vector>
 #include <map>
 #include "tur/common.hpp"
+#include "tur/mathexpr.hpp"
 
 namespace tur::id
 {
@@ -61,10 +63,10 @@ namespace tur::id
     using istring_t = IArray<sym_t>;
     using symrange_t = Range<sym_t>;
 
-    class IndexRangeCat {
+    class IdxRangeCat {
     public:
         class const_iterator {
-            friend class IndexRangeCat;
+            friend class IdxRangeCat;
         public:
             index_t operator*() const;
             const_iterator& operator++();
@@ -74,7 +76,7 @@ namespace tur::id
             index_t value;
         };
 
-        IndexRangeCat() = default;
+        IdxRangeCat() = default;
 
         const_iterator begin() const;
         const_iterator end() const;
@@ -85,7 +87,7 @@ namespace tur::id
         idxranges_t m_ranges;
     };
 
-    bool operator!=(const IndexRangeCat::const_iterator &lhs, const IndexRangeCat::const_iterator &rhs);
+    bool operator!=(const IdxRangeCat::const_iterator &lhs, const IdxRangeCat::const_iterator &rhs);
 
 
     struct IdRef {
@@ -97,6 +99,39 @@ namespace tur::id
     struct IdDesc {
         name_t name;
         shape_t shape;
+    };
+
+
+
+    using idxeval_t = std::vector<std::unique_ptr<tur::math::IEvaluable>>;
+
+    class IdRefEval {
+    public:
+        IdRefEval(name_t name, idxeval_t &&idxeval);
+        IdRef eval(const ctx::context_t *vars = nullptr) const;
+    private:
+        name_t name;
+        idxeval_t idxeval;
+    };
+
+
+    class IdxRangeEval {
+    public:
+        IdxRangeEval(std::unique_ptr<tur::math::IEvaluable> &&first, std::unique_ptr<tur::math::IEvaluable> &&last);
+        idxrange_t eval(const ctx::context_t *vars = nullptr) const;
+    private:
+        std::unique_ptr<tur::math::IEvaluable> first, last;
+    };
+
+
+    class IdxRangeCatEval {
+    public:
+        IdxRangeCatEval() = default;
+        void append(IdxRangeEval &&range);
+
+        IdxRangeCat eval(const ctx::context_t *vars = nullptr) const;
+    private:
+        std::vector<IdxRangeEval> ranges;
     };
 
 

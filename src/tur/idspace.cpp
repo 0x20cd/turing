@@ -111,12 +111,12 @@ T Range<T>::last() const
 //////////////////////////////////////////////////
 
 
-index_t IndexRangeCat::const_iterator::operator*() const
+index_t IdxRangeCat::const_iterator::operator*() const
 {
     return this->value;
 }
 
-IndexRangeCat::const_iterator& IndexRangeCat::const_iterator::operator++()
+IdxRangeCat::const_iterator& IdxRangeCat::const_iterator::operator++()
 {
     if (!this->ranges_it->next(this->value)) {
         this->value = 0;
@@ -127,7 +127,7 @@ IndexRangeCat::const_iterator& IndexRangeCat::const_iterator::operator++()
     return *this;
 }
 
-bool tur::id::operator!=(const IndexRangeCat::const_iterator &lhs, const IndexRangeCat::const_iterator &rhs)
+bool tur::id::operator!=(const IdxRangeCat::const_iterator &lhs, const IdxRangeCat::const_iterator &rhs)
 {
     return lhs.ranges_it != rhs.ranges_it || lhs.value != rhs.value;
 }
@@ -135,9 +135,9 @@ bool tur::id::operator!=(const IndexRangeCat::const_iterator &lhs, const IndexRa
 
 //////////////////////////////////////////////////
 
-IndexRangeCat::const_iterator IndexRangeCat::begin() const
+IdxRangeCat::const_iterator IdxRangeCat::begin() const
 {
-    IndexRangeCat::const_iterator it;
+    IdxRangeCat::const_iterator it;
 
     it.ranges_it = this->m_ranges.cbegin();
     it.ranges_end = this->m_ranges.cend();
@@ -146,9 +146,9 @@ IndexRangeCat::const_iterator IndexRangeCat::begin() const
     return it;
 }
 
-IndexRangeCat::const_iterator IndexRangeCat::end() const
+IdxRangeCat::const_iterator IdxRangeCat::end() const
 {
-    IndexRangeCat::const_iterator it;
+    IdxRangeCat::const_iterator it;
 
     it.ranges_it = this->m_ranges.cend();
     it.ranges_end = this->m_ranges.cend();
@@ -157,16 +157,74 @@ IndexRangeCat::const_iterator IndexRangeCat::end() const
     return it;
 }
 
-bool IndexRangeCat::contains(index_t value) const
+bool IdxRangeCat::contains(index_t value) const
 {
     return std::any_of(this->m_ranges.cbegin(), this->m_ranges.cend(), [value](const idxrange_t &range){
         return range.contains(value);
     });
 }
 
-void IndexRangeCat::append(const idxrange_t &range)
+void IdxRangeCat::append(const idxrange_t &range)
 {
     this->m_ranges.push_back(range);
+}
+
+
+//////////////////////////////////////////////////
+
+
+IdRefEval::IdRefEval(name_t name, idxeval_t &&idxeval)
+    : name(name)
+    , idxeval(std::move(idxeval))
+{}
+
+IdRef IdRefEval::eval(const ctx::context_t *vars) const
+{
+    IdRef ref;
+
+    ref.name = this->name;
+    for (const auto &expr : this->idxeval)
+        ref.idx.push_back(expr->eval(vars));
+
+    return ref;
+}
+
+
+//////////////////////////////////////////////////
+
+
+IdxRangeEval::IdxRangeEval(std::unique_ptr<tur::math::IEvaluable> &&first, std::unique_ptr<tur::math::IEvaluable> &&last)
+    : first(std::move(first))
+    , last(std::move(last))
+{}
+
+idxrange_t IdxRangeEval::eval(const ctx::context_t *vars) const
+{
+    idxrange_t range(
+        this->first->eval(vars),
+        this->last->eval(vars)
+    );
+
+    return range;
+}
+
+
+//////////////////////////////////////////////////
+
+
+void IdxRangeCatEval::append(IdxRangeEval &&range)
+{
+    this->ranges.push_back(std::move(range));
+}
+
+IdxRangeCat IdxRangeCatEval::eval(const ctx::context_t *vars) const
+{
+    IdxRangeCat rangecat;
+
+    for (const auto &range_eval : this->ranges)
+        rangecat.append(range_eval.eval(vars));
+
+    return rangecat;
 }
 
 
