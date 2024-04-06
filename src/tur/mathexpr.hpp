@@ -28,9 +28,9 @@ namespace tur::math
     class IEvaluable
     {
     public:
-
         virtual number_t eval(const ctx::context_t *vars = nullptr) = 0;
         virtual void inv_sign() = 0;
+        virtual ~IEvaluable() = default;
     };
 
 
