@@ -67,16 +67,22 @@ namespace tur::id
     public:
         class const_iterator {
             friend class IdxRangeCat;
+            friend class IndexIter;
         public:
+            const_iterator() = default;
+            const_iterator(const const_iterator&) = default;
             index_t operator*() const;
             const_iterator& operator++();
             friend bool operator!=(const const_iterator &lhs, const const_iterator &rhs);
+            friend bool operator==(const const_iterator &lhs, const const_iterator &rhs);
         private:
             idxranges_t::const_iterator ranges_it, ranges_end;
             index_t value;
         };
 
         IdxRangeCat() = default;
+        IdxRangeCat(IdxRangeCat&&) = default;
+        IdxRangeCat& operator=(IdxRangeCat&&) = default;
 
         const_iterator begin() const;
         const_iterator end() const;
@@ -88,6 +94,7 @@ namespace tur::id
     };
 
     bool operator!=(const IdxRangeCat::const_iterator &lhs, const IdxRangeCat::const_iterator &rhs);
+    bool operator==(const IdxRangeCat::const_iterator &lhs, const IdxRangeCat::const_iterator &rhs);
 
 
     struct IdRef {
@@ -103,7 +110,8 @@ namespace tur::id
 
 
 
-    using idxeval_t = std::vector<std::unique_ptr<tur::math::IEvaluable>>;
+    using indexeval_t = std::unique_ptr<tur::math::IEvaluable>;
+    using idxeval_t = std::vector<indexeval_t>;
 
     class IdRefEval {
     public:
@@ -117,12 +125,11 @@ namespace tur::id
 
     class IdxRangeEval {
     public:
-        IdxRangeEval(std::unique_ptr<tur::math::IEvaluable> &&first, std::unique_ptr<tur::math::IEvaluable> &&last);
+        IdxRangeEval(indexeval_t &&first, indexeval_t &&last);
         idxrange_t eval(const ctx::context_t *vars = nullptr) const;
     private:
-        std::unique_ptr<tur::math::IEvaluable> first, last;
+        indexeval_t first, last;
     };
-
 
     class IdxRangeCatEval {
     public:
@@ -133,6 +140,60 @@ namespace tur::id
     private:
         std::vector<IdxRangeEval> ranges;
     };
+
+    class IdRefIter;
+
+    class IndexIter {
+    public:
+        IndexIter(ctx::context_t &ctx, name_t name, IdxRangeCat &&rangecat);
+        IndexIter(const IndexIter&) = delete;
+        IndexIter(IndexIter &&other);
+
+        bool next();
+        index_t value() const;
+        void reset();
+    private:
+        IdxRangeCat rangecat;
+        IdxRangeCat::const_iterator it;
+        tur::ctx::Variable var;
+    };
+
+    class IndexIterEval {
+    public:
+        IndexIterEval(name_t name, IdxRangeCatEval &&rangecateval);
+        IndexIter eval(ctx::context_t &ctx) const;
+    private:
+        name_t name;
+        IdxRangeCatEval rangecateval;
+    };
+
+
+    class IdRefIter {
+    public:
+        using _index_t = std::variant<index_t, IndexIter>;
+        using _idx_t = std::vector<_index_t>;
+
+        IdRefIter(name_t name, _idx_t &&idx);
+        bool value(idx_t &idx_out);
+        bool next();
+    private:
+        name_t name;
+        _idx_t idx;
+        bool is_end;
+    };
+
+    class IdRefIterEval {
+    public:
+        using _index_t = std::variant<indexeval_t, IndexIterEval>;
+        using _idx_t = std::vector<_index_t>;
+
+        IdRefIterEval(name_t name, _idx_t &&idx);
+        IdRefIter eval(ctx::context_t &ctx) const;
+    private:
+        name_t name;
+        _idx_t idx;
+    };
+
 
 
     class IdSpace {

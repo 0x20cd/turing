@@ -132,6 +132,11 @@ bool tur::id::operator!=(const IdxRangeCat::const_iterator &lhs, const IdxRangeC
     return lhs.ranges_it != rhs.ranges_it || lhs.value != rhs.value;
 }
 
+bool tur::id::operator==(const IdxRangeCat::const_iterator &lhs, const IdxRangeCat::const_iterator &rhs)
+{
+    return lhs.ranges_it == rhs.ranges_it && lhs.value == rhs.value;
+}
+
 
 //////////////////////////////////////////////////
 
@@ -225,6 +230,142 @@ IdxRangeCat IdxRangeCatEval::eval(const ctx::context_t *vars) const
         rangecat.append(range_eval.eval(vars));
 
     return rangecat;
+}
+
+
+//////////////////////////////////////////////////
+
+
+IndexIter::IndexIter(ctx::context_t &ctx, name_t name, IdxRangeCat &&rangecat)
+    : rangecat(std::move(rangecat))
+    , it(this->rangecat.begin())
+    , var(ctx, name, *this->it)
+{}
+
+IndexIter::IndexIter(IndexIter &&other)
+    : var(std::move(other.var))
+{
+    auto dist = other.it.ranges_end - other.it.ranges_it;
+
+    this->rangecat = std::move(other.rangecat);
+    this->it = this->rangecat.end();
+
+    this->it.value = other.it.value;
+    this->it.ranges_it -= dist;
+}
+
+bool IndexIter::next()
+{
+    if (++this->it == this->rangecat.end())
+        return false;
+
+    this->var = *this->it;
+    return true;
+}
+
+index_t IndexIter::value() const
+{
+    return this->var.value();
+}
+
+void IndexIter::reset()
+{
+    this->it = this->rangecat.begin();
+    this->var = *it;
+}
+
+
+//////////////////////////////////////////////////
+
+
+IndexIterEval::IndexIterEval(name_t name, IdxRangeCatEval &&rangecateval)
+    : name(name)
+    , rangecateval(std::move(rangecateval))
+{}
+
+IndexIter IndexIterEval::eval(ctx::context_t &ctx) const
+{
+    IdxRangeCat rangecat = this->rangecateval.eval(&ctx);
+    return IndexIter(ctx, this->name, std::move(rangecat));
+}
+
+
+//////////////////////////////////////////////////
+
+
+IdRefIter::IdRefIter(name_t name, _idx_t &&idx)
+    : name(name)
+    , idx(std::move(idx))
+    , is_end(false)
+{}
+
+bool IdRefIter::value(idx_t &idx_out)
+{
+    if (this->is_end)
+        return false;
+
+    idx_t idx;
+    for (auto it = this->idx.begin(); it != this->idx.end(); ++it) {
+        index_t index;
+        if (std::holds_alternative<index_t>(*it)) {
+            index = std::get<index_t>(*it);
+        } else {
+            index = std::get<IndexIter>(*it).value();
+        }
+
+        idx.push_back(index);
+    }
+
+    idx_out = std::move(idx);
+    return true;
+}
+
+bool IdRefIter::next()
+{
+    if (this->is_end)
+        return false;
+
+    auto it_rev = this->idx.rbegin();
+    for (; it_rev != this->idx.rend(); ++it_rev) {
+        if (std::holds_alternative<index_t>(*it_rev))
+            continue;
+
+        auto &iter = std::get<IndexIter>(*it_rev);
+        if (iter.next())
+            break;
+
+        iter.reset();
+    }
+
+    if (it_rev == this->idx.rend()) {
+        this->is_end = true;
+        return false;
+    }
+
+    return true;
+}
+
+
+//////////////////////////////////////////////////
+
+
+IdRefIterEval::IdRefIterEval(name_t name, _idx_t &&idx)
+    : name(name)
+    , idx(std::move(idx))
+{}
+
+IdRefIter IdRefIterEval::eval(ctx::context_t &ctx) const
+{
+    IdRefIter::_idx_t idx;
+
+    for (auto it = this->idx.cbegin(); it != this->idx.cend(); ++it) {
+        if (std::holds_alternative<indexeval_t>(*it))
+            idx.push_back(std::get<indexeval_t>(*it)->eval(&ctx));
+        else
+            idx.push_back(std::get<IndexIterEval>(*it).eval(ctx));
+    }
+
+    return IdRefIter(this->name, std::move(idx));
 }
 
 
