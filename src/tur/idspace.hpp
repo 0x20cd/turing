@@ -275,11 +275,11 @@ namespace tur::id
     {
     public:
         SymSpace() = default;
-        void insert(const SymDesc &desc);
+        void insert(SymDesc &&desc);
         sym_t getSym(const IdRef &ref) const;
         bool contains(name_t name) const;
     private:
-        QHash<name_t, SymDesc> m_nameToDesc;
+        std::unordered_map<name_t, SymDesc> m_nameToDesc;
     };
 }
 

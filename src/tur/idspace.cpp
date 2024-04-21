@@ -649,7 +649,7 @@ sym_t StringCat::operator[](uint64_t i) const
 //////////////////////////////////////////////////
 
 
-void SymSpace::insert(const SymDesc &desc)
+void SymSpace::insert(SymDesc &&desc)
 {
     if (this->m_nameToDesc.contains(desc.name))
         throw IdInitError{};
@@ -666,7 +666,7 @@ void SymSpace::insert(const SymDesc &desc)
     if (desc.value.size() != len)
         throw IdInitError{};
 
-    this->m_nameToDesc.insert(desc.name, desc);
+    this->m_nameToDesc[desc.name] = std::move(desc);
 }
 
 sym_t SymSpace::getSym(const IdRef &ref) const
@@ -674,8 +674,7 @@ sym_t SymSpace::getSym(const IdRef &ref) const
     if (!this->m_nameToDesc.contains(ref.name))
         throw IdAccessError{};
 
-    const auto &nameToDescConst = this->m_nameToDesc;
-    const SymDesc &desc = nameToDescConst[ref.name];
+    const SymDesc &desc = this->m_nameToDesc.at(ref.name);
 
     uint64_t pos;
     if (!idxToPos(ref.idx, desc.shape, pos))
