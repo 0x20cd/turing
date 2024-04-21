@@ -576,7 +576,7 @@ void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
             if (expected != CAT_OR_END && expected != ANY_OP)
                 throw ParseError();
 
-            if (it_val_2 != end) {
+            if (it_val_2 == end) {
                 auto value = it_val_1->value.toString();
                 if (!value.isEmpty()) {
                     this->append(std::unique_ptr<istring_t>(
@@ -606,8 +606,10 @@ void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
         case Token::STRING:
             if (expected == NEXT_VALUE) {
                 it_val_1 = it;
+                expected = ANY_OP;
             } else if (expected == RBOUND) {
                 it_val_2 = it;
+                expected = CAT_OR_END;
             } else throw ParseError();
 
             continue;

@@ -108,7 +108,7 @@ QString Tokenizer::nextName(QStringView tail, QString::const_iterator &it)
 
 Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it)
 {
-    static QRegularExpression sym_re(R"raw((["'])|([^"'\n\\])|\\(["'\\])|\\u\{([0-9a-fA-F]{1,8})\})raw");
+    static QRegularExpression sym_re(R"raw((["'])|([^"'\n\\])|\\(["'\\])|\\u\{([0-9a-fA-F]{1,6})\}|.)raw");
     static QRegularExpression num_re(R"raw(^[0-9]+)raw");
 
     Token token;
@@ -167,7 +167,7 @@ Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it)
             value.append(view);
         }
         else if (match.hasCaptured(4)) {
-            view = match.capturedView();
+            view = match.capturedView(4);
             char32_t sym = view.toUInt(nullptr, 16);
 
             value.append(QString::fromUcs4(&sym, 1));

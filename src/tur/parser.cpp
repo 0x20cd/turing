@@ -10,6 +10,67 @@ static inline QList<Token>::const_iterator nextPeriod(QList<Token>::const_iterat
 }
 
 
+IdxOrShape_e tur::parser::getIdxOrShape(
+    QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
+    tur::id::idx_t &idx, tur::id::shape_t *shape)
+{
+    tur::id::indexeval_t index_eval;
+    tur::id::IdxRangeEval range_eval;
+
+    IdxOrShape_e type = NONE;
+
+    while (it != end && it->type == Token::BRACKET_L) {
+        ++it;
+        auto expr_lbound = it, expr_rbound = end, range_it = end;
+
+        while (it != end) {
+            if (it->type == Token::BRACKET_R) {
+                expr_rbound = it;
+                ++it;
+                break;
+            }
+
+            if (it->type == Token::RANGE) {
+                if (shape == nullptr)
+                    throw ParseError();
+                range_it = it;
+            }
+
+            ++it;
+        }
+
+        if (expr_rbound == end)
+            throw ParseError();
+
+        if (range_it != end) {
+            if (type == IDX)
+                throw ParseError();
+            type = SHAPE;
+
+            index_eval = tur::math::Expression::parse(expr_lbound, range_it);
+            range_eval.setFirst(std::move(index_eval));
+
+            ++range_it;
+            index_eval = tur::math::Expression::parse(range_it, expr_rbound);
+            range_eval.setLast(std::move(index_eval));
+
+            shape->push_back(range_eval.eval(nullptr));
+        }
+        else {
+            if (type == SHAPE)
+                throw ParseError();
+            type = IDX;
+
+            index_eval = tur::math::Expression::parse(expr_lbound, expr_rbound);
+
+            idx.push_back(index_eval->eval(nullptr));
+        }
+    }
+
+    return type;
+}
+
+
 StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames)
 {}
 
@@ -40,6 +101,8 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
     enum {NONE, KW_NULL, DESC, REF} lval_type = NONE;
 
     if (it->type == Token::KW_NULL) {
+        ++it;
+
         if (this->is_null_declared || this->is_null_requested)
             throw ParseError();
 
@@ -50,28 +113,19 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         tur::id::name_t name = it->value.toString();
         ++it;
 
-        if (this->allnames.contains(name))
-            throw ParseError();
-        this->allnames.insert(name);
+        auto idx_or_shape = getIdxOrShape(it, end, ref.idx, &desc.shape);
 
-        auto shape_or_idx = getShapeOrIdx(it, end, desc.shape, ref.idx);
-
-        switch (shape_or_idx) {
-        case shapeOrIdx_e::NONE:
-        case shapeOrIdx_e::SHAPE:
-            lval_type = DESC;
-            desc.name = name;
-
-            break;
-
-        case shapeOrIdx_e::IDX:
+        if (idx_or_shape == IdxOrShape_e::IDX) {
             lval_type = REF;
             ref.name = name;
+        }
+        else {
+            if (this->allnames.contains(name))
+                throw ParseError();
+            this->allnames.insert(name);
 
-            break;
-
-        default:
-            throw std::logic_error("Unknown shape_or_idx");
+            lval_type = DESC;
+            desc.name = name;
         }
     }
     else throw ParseError();
@@ -89,22 +143,14 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         if (it == end)
             throw ParseError();
 
-
-        switch (lval_type) {
-        case DESC:
-            {
+        if (lval_type == DESC) {
             auto rval_lbound = it;
             while (it != end && it->type != Token::COMMA) ++it;
             auto rval_rbound = it;
             desc.value.parse(rval_lbound, rval_rbound);
-            }
 
             this->alph_sym.insert(std::move(desc));
-
-            break;
-
-        case KW_NULL:
-        case REF:
+        } else {
             id_t value;
 
             if (it->type == Token::STRING) {
@@ -128,80 +174,17 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             } else {
                 this->alph.setAltId(ref, value);
             }
-
-            break;
-
-        default:
-            throw std::logic_error("Unknown lval_type");
-        }
-
-        if (it != end) {
-            if (it->type != Token::COMMA)
-                throw ParseError();
-            ++it;
         }
     }
     else throw ParseError();
 
-    return true;
-}
-
-
-Alphabet::shapeOrIdx_e Alphabet::getShapeOrIdx(
-    QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
-    tur::id::shape_t &shape, tur::id::idx_t &idx) const
-{
-    tur::id::indexeval_t index_eval;
-    tur::id::IdxRangeEval range_eval;
-
-    shapeOrIdx_e type = NONE;
-
-    while (it != end && it->type == Token::BRACKET_L) {
-        ++it;
-        auto expr_lbound = it, expr_rbound = end, range_it = end;
-
-        while (it != end) {
-            if (it->type == Token::BRACKET_R) {
-                expr_rbound = it;
-                ++it;
-                break;
-            }
-
-            if (it->type == Token::RANGE)
-                range_it = it;
-
-            ++it;
-        }
-
-        if (expr_rbound == end)
+    if (it != end) {
+        if (it->type != Token::COMMA)
             throw ParseError();
-
-        if (range_it != end) {
-            if (type == IDX)
-                throw ParseError();
-            type = SHAPE;
-
-            index_eval = tur::math::Expression::parse(expr_lbound, range_it);
-            range_eval.setFirst(std::move(index_eval));
-
-            ++range_it;
-            index_eval = tur::math::Expression::parse(range_it, expr_rbound);
-            range_eval.setLast(std::move(index_eval));
-
-            shape.push_back(range_eval.eval(nullptr));
-        }
-        else {
-            if (type == SHAPE)
-                throw ParseError();
-            type = IDX;
-
-            index_eval = tur::math::Expression::parse(expr_lbound, expr_rbound);
-
-            idx.push_back(index_eval->eval(nullptr));
-        }
+        ++it;
     }
 
-    return type;
+    return true;
 }
 
 

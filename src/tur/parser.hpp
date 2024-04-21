@@ -6,6 +6,12 @@
 
 namespace tur::parser
 {
+    enum IdxOrShape_e {NONE, IDX, SHAPE};
+    IdxOrShape_e getIdxOrShape(
+        QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
+        tur::id::idx_t &idx, tur::id::shape_t *shape
+    );
+
     class Rule {
     public:
         Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames);
@@ -27,12 +33,7 @@ namespace tur::parser
     public:
         Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames);
     private:
-        enum shapeOrIdx_e {NONE, SHAPE, IDX};
-
         bool addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
-        shapeOrIdx_e getShapeOrIdx(
-            QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
-            tur::id::shape_t &shape, tur::id::idx_t &idx) const;
         const Token& getAssignedValue(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, bool allow_null);
 
         tur::id::IdSpace alph;
