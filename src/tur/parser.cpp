@@ -229,6 +229,10 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
             if (alph) throw ParseError();
 
             ++it;
+            if (it->type != Token::COLON)
+                throw ParseError();
+            ++it;
+
             this->alph = std::make_unique<Alphabet>(it, it_period, this->allnames);
 
             break;
@@ -237,6 +241,10 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
             if (states) throw ParseError();
 
             ++it;
+            if (it->type != Token::COLON)
+                throw ParseError();
+            ++it;
+
             this->states = std::make_unique<States>(it, it_period, this->allnames);
 
             break;
