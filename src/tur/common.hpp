@@ -23,6 +23,10 @@ namespace tur
         SourceRef srcRef;
         QVariant value;
     };
+
+    enum Direction {None, Left, Right};
+
+    struct ParseError {};
 }
 
 #endif // COMMON_HPP

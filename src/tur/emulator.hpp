@@ -4,17 +4,16 @@
 #include <QHash>
 #include <list>
 #include <set>
+#include "common.hpp"
 
 namespace tur {
     class Loader;
-
-    enum Direction {None = 'N', Left = 'L', Right = 'R'};
 
     struct Condition {
         quint32 state, symbol;
     };
 
-    static_assert(sizeof(Condition) == sizeof(quint64));
+    static_assert(sizeof(Condition) == sizeof(quint64), "");
 
     struct Transition {
         quint32 state, symbol;

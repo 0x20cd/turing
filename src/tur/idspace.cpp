@@ -183,6 +183,16 @@ IdRefEval::IdRefEval(name_t name, idxeval_t &&idxeval)
     , idxeval(std::move(idxeval))
 {}
 
+void IdRefEval::setName(name_t name)
+{
+    this->name = name;
+}
+
+void IdRefEval::setIdxEval(idxeval_t &&idxeval)
+{
+    this->idxeval = std::move(idxeval);
+}
+
 IdRef IdRefEval::eval(const ctx::context_t *vars) const
 {
     IdRef ref;
@@ -202,6 +212,16 @@ IdxRangeEval::IdxRangeEval(std::unique_ptr<tur::math::IEvaluable> &&first, std::
     : first(std::move(first))
     , last(std::move(last))
 {}
+
+void IdxRangeEval::setFirst(indexeval_t &&first)
+{
+    this->first = std::move(first);
+}
+
+void IdxRangeEval::setLast(indexeval_t &&last)
+{
+    this->last = std::move(last);
+}
 
 idxrange_t IdxRangeEval::eval(const ctx::context_t *vars) const
 {
@@ -283,6 +303,16 @@ IndexIterEval::IndexIterEval(name_t name, IdxRangeCatEval &&rangecateval)
     , rangecateval(std::move(rangecateval))
 {}
 
+void IndexIterEval::setName(name_t name)
+{
+    this->name = name;
+}
+
+void IndexIterEval::setRangeCatEval(IdxRangeCatEval &&rangecateval)
+{
+    this->rangecateval = std::move(rangecateval);
+}
+
 IndexIter IndexIterEval::eval(ctx::context_t &ctx) const
 {
     IdxRangeCat rangecat = this->rangecateval.eval(&ctx);
@@ -299,7 +329,7 @@ IdRefIter::IdRefIter(name_t name, _idx_t &&idx)
     , is_end(false)
 {}
 
-bool IdRefIter::value(idx_t &idx_out)
+bool IdRefIter::value(idx_t &idx_out) const
 {
     if (this->is_end)
         return false;
@@ -353,6 +383,16 @@ IdRefIterEval::IdRefIterEval(name_t name, _idx_t &&idx)
     : name(name)
     , idx(std::move(idx))
 {}
+
+void IdRefIterEval::setName(name_t name)
+{
+    this->name = name;
+}
+
+void IdRefIterEval::setIdx(_idx_t &&idx)
+{
+    this->idx = std::move(idx);
+}
 
 IdRefIter IdRefIterEval::eval(ctx::context_t &ctx) const
 {
@@ -519,10 +559,71 @@ StringCat::StringCat()
     : m_size(0)
 {}
 
-void StringCat::append(const std::shared_ptr<istring_t> &str)
+void StringCat::append(std::unique_ptr<istring_t> str)
 {
     this->m_size += str->size();
-    this->strings.push_back(str);
+    this->strings.push_back(std::move(str));
+}
+
+void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
+{
+    enum {NEXT_VALUE, RBOUND, CAT_OR_END, ANY_OP} expected = NEXT_VALUE;
+
+    auto it_val_1 = end, it_val_2 = end;
+
+    for (auto it = begin; true; ++it) {
+        if (it == end || it->type == Token::CAT) {
+            if (expected != CAT_OR_END && expected != ANY_OP)
+                throw ParseError();
+
+            if (it_val_2 != end) {
+                auto value = it_val_1->value.toString();
+                if (!value.isEmpty()) {
+                    this->append(std::unique_ptr<istring_t>(
+                        new StringValue{value}
+                    ));
+                }
+            } else {
+                auto lvalue = it_val_1->value.toString().toUcs4();
+                auto rvalue = it_val_2->value.toString().toUcs4();
+
+                if (lvalue.size() != 1 || rvalue.size() != 1)
+                    throw ParseError();
+
+                this->append(std::unique_ptr<istring_t>(
+                    new symrange_t{lvalue.front(), rvalue.front()}
+                ));
+            }
+
+            if (it == end) break;
+
+            it_val_1 = it_val_2 = end;
+            expected = NEXT_VALUE;
+            continue;
+        }
+
+        switch (it->type) {
+        case Token::STRING:
+            if (expected == NEXT_VALUE) {
+                it_val_1 = it;
+            } else if (expected == RBOUND) {
+                it_val_2 = it;
+            } else throw ParseError();
+
+            continue;
+
+        case Token::RANGE:
+            if (expected != ANY_OP)
+                throw ParseError();
+
+            expected = RBOUND;
+
+            continue;
+
+        default:
+            throw ParseError();
+        }
+    }
 }
 
 uint64_t StringCat::size() const

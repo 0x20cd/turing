@@ -115,7 +115,11 @@ namespace tur::id
 
     class IdRefEval {
     public:
+        IdRefEval() = default;
         IdRefEval(name_t name, idxeval_t &&idxeval);
+
+        void setName(name_t name);
+        void setIdxEval(idxeval_t &&idxeval);
         IdRef eval(const ctx::context_t *vars = nullptr) const;
     private:
         name_t name;
@@ -125,7 +129,11 @@ namespace tur::id
 
     class IdxRangeEval {
     public:
+        IdxRangeEval() = default;
         IdxRangeEval(indexeval_t &&first, indexeval_t &&last);
+
+        void setFirst(indexeval_t &&first);
+        void setLast(indexeval_t &&last);
         idxrange_t eval(const ctx::context_t *vars = nullptr) const;
     private:
         indexeval_t first, last;
@@ -141,7 +149,6 @@ namespace tur::id
         std::vector<IdxRangeEval> ranges;
     };
 
-    class IdRefIter;
 
     class IndexIter {
     public:
@@ -160,7 +167,11 @@ namespace tur::id
 
     class IndexIterEval {
     public:
+        IndexIterEval() = default;
         IndexIterEval(name_t name, IdxRangeCatEval &&rangecateval);
+
+        void setName(name_t name);
+        void setRangeCatEval(IdxRangeCatEval &&rangecateval);
         IndexIter eval(ctx::context_t &ctx) const;
     private:
         name_t name;
@@ -174,7 +185,7 @@ namespace tur::id
         using _idx_t = std::vector<_index_t>;
 
         IdRefIter(name_t name, _idx_t &&idx);
-        bool value(idx_t &idx_out);
+        bool value(idx_t &idx_out) const;
         bool next();
     private:
         name_t name;
@@ -187,7 +198,11 @@ namespace tur::id
         using _index_t = std::variant<indexeval_t, IndexIterEval>;
         using _idx_t = std::vector<_index_t>;
 
+        IdRefIterEval() = default;
         IdRefIterEval(name_t name, _idx_t &&idx);
+
+        void setName(name_t name);
+        void setIdx(_idx_t &&idx);
         IdRefIter eval(ctx::context_t &ctx) const;
     private:
         name_t name;
@@ -240,19 +255,18 @@ namespace tur::id
     {
     public:
         StringCat();
-        void append(const std::shared_ptr<istring_t> &str);
+        void append(std::unique_ptr<istring_t> str);
+        void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
 
         virtual uint64_t size() const override;
         virtual sym_t operator[](uint64_t i) const override;
     private:
         quint64 m_size;
-        QList<std::shared_ptr<istring_t>> strings;
+        std::vector<std::unique_ptr<istring_t>> strings;
     };
 
 
-    struct SymDesc {
-        name_t name;
-        shape_t shape;
+    struct SymDesc : public IdDesc {
         StringCat value;
     };
 
