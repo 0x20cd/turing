@@ -1,0 +1,63 @@
+#ifndef TUR_PARSER_HPP
+#define TUR_PARSER_HPP
+#include <optional>
+#include "tur/common.hpp"
+#include "tur/idspace.hpp"
+
+namespace tur::parser
+{
+    class Rule {
+    public:
+        Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames);
+    private:
+        tur::id::IdRefIterEval ref;
+        std::optional<tur::id::IdRefEval> symbol, state;
+        tur::Direction dir;
+    };
+
+    class StateBlock {
+    public:
+        StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames);
+    private:
+        tur::id::IdRefIterEval ref;
+        std::vector<Rule> rules;
+    };
+
+    class Alphabet {
+    public:
+        Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames);
+    private:
+        enum shapeOrIdx_e {NONE, SHAPE, IDX};
+
+        bool addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
+        shapeOrIdx_e getShapeOrIdx(
+            QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
+            tur::id::shape_t &shape, tur::id::idx_t &idx) const;
+        const Token& getAssignedValue(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, bool allow_null);
+
+        tur::id::IdSpace alph;
+        tur::id::SymSpace alph_sym;
+        QSet<tur::id::name_t> &allnames;
+        tur::id::id_t null_value;
+        bool is_null_declared, is_null_requested;
+    };
+
+    class States {
+    public:
+        States(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames);
+    private:
+        tur::id::IdSpace states;
+    };
+
+    class Parser {
+    public:
+        Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+    private:
+        QSet<tur::id::name_t> allnames;
+        std::unique_ptr<Alphabet> alph;
+        std::unique_ptr<States> states;
+        std::vector<StateBlock> blocks;
+    };
+}
+
+#endif // TUR_PARSER_HPP
