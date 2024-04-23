@@ -10,8 +10,9 @@ static inline QList<Token>::const_iterator nextPeriod(QList<Token>::const_iterat
     return it;
 }
 
+enum IdxOrShape_e {NONE, IDX, SHAPE};
 
-IdxOrShape_e tur::parser::getIdxOrShape(
+static IdxOrShape_e getIdxOrShape(
     QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
     tur::id::idx_t &idx, tur::id::shape_t *shape)
 {

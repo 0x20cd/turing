@@ -6,12 +6,6 @@
 
 namespace tur::parser
 {
-    enum IdxOrShape_e {NONE, IDX, SHAPE};
-    IdxOrShape_e getIdxOrShape(
-        QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
-        tur::id::idx_t &idx, tur::id::shape_t *shape
-    );
-
     class Rule {
     public:
         Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames);
