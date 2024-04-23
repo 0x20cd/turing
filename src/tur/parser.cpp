@@ -1,3 +1,4 @@
+#include "tur/emulator.hpp"
 #include "tur/parser.hpp"
 using namespace tur;
 using namespace tur::parser;
@@ -188,32 +189,91 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
 }
 
 
-/*const Token& Alphabet::getAssignedValue(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, bool allow_null)
-{
-    if (it == end)
-        throw ParseError();
-
-    switch(it->type) {
-    case Token::KW_NULL:
-        if (!allow_null)
-            throw ParseError();
-        this->is_null_requested = true;
-        break;
-    case Token::STRING:
-        break;
-    default:
-        throw ParseError();
-    }
-
-    const Token& ret = *it;
-    ++it;
-    return ret;
-}*/
-
-
 States::States(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames)
     : states(2)
-{}
+    , allnames(allnames)
+{
+    if (begin == end)
+        throw ParseError();
+
+    auto it = begin;
+    while (this->addNextDeclaration(it, end));
+}
+
+
+bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end)
+{
+    if (it == end)
+        return false;
+
+    tur::id::IdRef ref;
+    tur::id::IdDesc desc;
+
+    enum {NONE, KW, DESC, REF} lval_type = NONE;
+
+    if (it->type == Token::KW_START || it->type == Token::KW_END) {
+        ++it;
+        lval_type = KW;
+    }
+    else if (it->type == Token::ID) {
+        tur::id::name_t name = it->value.toString();
+        ++it;
+
+        auto idx_or_shape = getIdxOrShape(it, end, ref.idx, &desc.shape);
+
+        if (idx_or_shape == IdxOrShape_e::IDX) {
+            lval_type = REF;
+            ref.name = name;
+        }
+        else {
+            if (this->allnames.contains(name))
+                throw ParseError();
+            this->allnames.insert(name);
+
+            lval_type = DESC;
+            desc.name = name;
+        }
+    }
+    else throw ParseError();
+
+    if (it == end || it->type == Token::COMMA) {
+        if (lval_type == REF)
+            throw ParseError();
+
+        if (lval_type == DESC)
+            this->states.push(desc);
+    }
+    else if (it->type == Token::ASSIGN) {
+        ++it;
+
+        if (it == end)
+            throw ParseError();
+
+        if (lval_type != REF)
+            throw ParseError();
+
+        switch (it->type) {
+        case Token::KW_START:
+            this->states.setAltId(ref, tur::STATE_START);
+            break;
+        case Token::KW_END:
+            this->states.setAltId(ref, tur::STATE_END);
+            break;
+        default:
+            throw ParseError();
+        }
+        ++it;
+    }
+    else throw ParseError();
+
+    if (it != end) {
+        if (it->type != Token::COMMA)
+            throw ParseError();
+        ++it;
+    }
+
+    return true;
+}
 
 
 Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)

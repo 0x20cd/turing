@@ -34,7 +34,6 @@ namespace tur::parser
         Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames);
     private:
         bool addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
-        const Token& getAssignedValue(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, bool allow_null);
 
         tur::id::IdSpace alph;
         tur::id::SymSpace alph_sym;
@@ -47,7 +46,10 @@ namespace tur::parser
     public:
         States(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames);
     private:
+        bool addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
+
         tur::id::IdSpace states;
+        QSet<tur::id::name_t> &allnames;
     };
 
     class Parser {
