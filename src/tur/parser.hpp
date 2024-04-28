@@ -10,8 +10,10 @@ namespace tur::parser
     public:
         Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames);
     private:
-        tur::id::IdRefIterEval ref;
-        std::optional<tur::id::IdRefEval> symbol, state;
+        enum {NONE, KW_NULL, KW_START, KW_END, KW_SAME, ITER, REF}
+            refiter_type, symbol_type, state_type;
+        tur::id::IdRefIterEval refiter;
+        tur::id::IdRefEval symbol, state;
         tur::Direction dir;
     };
 

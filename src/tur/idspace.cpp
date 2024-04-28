@@ -193,6 +193,37 @@ void IdRefEval::setIdxEval(idxeval_t &&idxeval)
     this->idxeval = std::move(idxeval);
 }
 
+void IdRefEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
+{
+    name_t name;
+    idxeval_t idxeval;
+
+    auto it = begin;
+
+    if (it == end || it->type != Token::ID)
+        throw ParseError();
+
+    name = it->value.toString();
+    ++it;
+
+    while (it != end) {
+        if (it->type != Token::BRACKET_L)
+            throw ParseError();
+        ++it;
+
+        auto lbound = it, rbound = nextToken(it, end, Token::BRACKET_R);
+        if (rbound == end)
+            throw ParseError();
+        it = rbound;
+        ++it;
+
+        idxeval.push_back(tur::math::Expression::parse(lbound, rbound));
+    }
+
+    this->name = name;
+    this->idxeval = std::move(idxeval);
+}
+
 IdRef IdRefEval::eval(const ctx::context_t *vars) const
 {
     IdRef ref;
@@ -240,6 +271,45 @@ idxrange_t IdxRangeEval::eval(const ctx::context_t *vars) const
 void IdxRangeCatEval::append(IdxRangeEval &&range)
 {
     this->ranges.push_back(std::move(range));
+}
+
+void IdxRangeCatEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
+{
+    decltype(this->ranges) ranges;
+    IdxRangeEval rangeeval;
+
+    auto it = begin;
+
+    while (true) {
+        if (it == end)
+            throw ParseError();
+
+        auto rbound = nextToken(it, end, Token::RANGE);
+        if (rbound == end)
+            throw ParseError();
+        rangeeval.setFirst(tur::math::Expression::parse(it, rbound));
+
+        it = rbound;
+        ++it;
+
+        rbound = nextToken(it, end, Token::CAT);
+        rangeeval.setLast(tur::math::Expression::parse(it, rbound));
+
+        ranges.push_back(std::move(rangeeval));
+
+        if (rbound == end)
+            break;
+
+        it = rbound;
+        ++it;
+    }
+
+    this->ranges = std::move(ranges);
+}
+
+bool IdxRangeCatEval::isEmpty() const
+{
+    return this->ranges.empty();
 }
 
 IdxRangeCat IdxRangeCatEval::eval(const ctx::context_t *vars) const
@@ -313,9 +383,35 @@ void IndexIterEval::setRangeCatEval(IdxRangeCatEval &&rangecateval)
     this->rangecateval = std::move(rangecateval);
 }
 
-IndexIter IndexIterEval::eval(ctx::context_t &ctx) const
+void IndexIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {
-    IdxRangeCat rangecat = this->rangecateval.eval(&ctx);
+    auto it = begin;
+
+    if (it == end || it->type != Token::ID)
+        throw ParseError();
+
+    this->name = it->value.toString();
+    ++it;
+
+    if (it == end)
+        return;
+
+    if (it->type != Token::ITER)
+        throw ParseError();
+    ++it;
+
+    this->rangecateval.parse(it, end);
+}
+
+IndexIter IndexIterEval::eval(ctx::context_t &ctx, const idxrange_t &size) const
+{
+    IdxRangeCat rangecat;
+
+    if (this->rangecateval.isEmpty())
+        rangecat.append(size);
+    else
+        rangecat = this->rangecateval.eval(&ctx);
+
     return IndexIter(ctx, this->name, std::move(rangecat));
 }
 
@@ -394,15 +490,61 @@ void IdRefIterEval::setIdx(_idx_t &&idx)
     this->idx = std::move(idx);
 }
 
-IdRefIter IdRefIterEval::eval(ctx::context_t &ctx) const
+void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
+{
+    name_t name;
+    IdRefIterEval::_idx_t idxeval;
+
+    auto it = begin;
+
+    if (it == end || it->type != Token::ID)
+        throw ParseError();
+
+    name = it->value.toString();
+    ++it;
+
+    while (it != end) {
+        if (it->type == Token::BRACKET_L) {
+            ++it;
+            auto lbound = it, rbound = nextToken(it, end, Token::BRACKET_R);
+            if (rbound == end)
+                throw ParseError();
+            it = rbound;
+            ++it;
+
+            idxeval.push_back(tur::math::Expression::parse(lbound, rbound));
+        }
+        else if (it->type == Token::BRACE_L) {
+            ++it;
+            auto lbound = it, rbound = nextToken(it, end, Token::BRACE_R);
+            if (rbound == end)
+                throw ParseError();
+            it = rbound;
+            ++it;
+
+            IndexIterEval iditereval;
+            iditereval.parse(lbound, rbound);
+            idxeval.push_back(std::move(iditereval));
+        }
+        else throw ParseError();
+    }
+
+    this->name = name;
+    this->idx = std::move(idxeval);
+}
+
+IdRefIter IdRefIterEval::eval(ctx::context_t &ctx, const shape_t &shape) const
 {
     IdRefIter::_idx_t idx;
 
-    for (auto it = this->idx.cbegin(); it != this->idx.cend(); ++it) {
-        if (std::holds_alternative<indexeval_t>(*it))
-            idx.push_back(std::get<indexeval_t>(*it)->eval(&ctx));
-        else
-            idx.push_back(std::get<IndexIterEval>(*it).eval(ctx));
+    for (qsizetype i = 0; i < this->idx.size(); ++i) {
+        const auto &curr = this->idx.at(i);
+
+        if (std::holds_alternative<indexeval_t>(curr)) {
+            idx.push_back(std::get<indexeval_t>(curr)->eval(&ctx));
+        } else {
+            idx.push_back(std::get<IndexIterEval>(curr).eval(ctx, shape[i]));
+        }
     }
 
     return IdRefIter(this->name, std::move(idx));

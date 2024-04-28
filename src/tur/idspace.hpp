@@ -120,6 +120,7 @@ namespace tur::id
 
         void setName(name_t name);
         void setIdxEval(idxeval_t &&idxeval);
+        void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
         IdRef eval(const ctx::context_t *vars = nullptr) const;
     private:
         name_t name;
@@ -142,8 +143,11 @@ namespace tur::id
     class IdxRangeCatEval {
     public:
         IdxRangeCatEval() = default;
-        void append(IdxRangeEval &&range);
 
+        void append(IdxRangeEval &&range);
+        void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+
+        bool isEmpty() const;
         IdxRangeCat eval(const ctx::context_t *vars = nullptr) const;
     private:
         std::vector<IdxRangeEval> ranges;
@@ -172,7 +176,8 @@ namespace tur::id
 
         void setName(name_t name);
         void setRangeCatEval(IdxRangeCatEval &&rangecateval);
-        IndexIter eval(ctx::context_t &ctx) const;
+        void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+        IndexIter eval(ctx::context_t &ctx, const idxrange_t &size) const;
     private:
         name_t name;
         IdxRangeCatEval rangecateval;
@@ -203,7 +208,8 @@ namespace tur::id
 
         void setName(name_t name);
         void setIdx(_idx_t &&idx);
-        IdRefIter eval(ctx::context_t &ctx) const;
+        void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+        IdRefIter eval(ctx::context_t &ctx, const shape_t &shape) const;
     private:
         name_t name;
         _idx_t idx;

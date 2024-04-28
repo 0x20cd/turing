@@ -27,6 +27,12 @@ namespace tur
     enum Direction {None, Left, Right};
 
     struct ParseError {};
+
+    inline QList<Token>::const_iterator nextToken(QList<Token>::const_iterator it, QList<Token>::const_iterator end, Token::Type type)
+    {
+        while (it != end && it->type != type) ++it;
+        return it;
+    }
 }
 
 #endif // COMMON_HPP

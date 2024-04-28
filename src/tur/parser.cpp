@@ -3,13 +3,6 @@
 using namespace tur;
 using namespace tur::parser;
 
-
-static inline QList<Token>::const_iterator nextPeriod(QList<Token>::const_iterator it, QList<Token>::const_iterator end)
-{
-    while (it != end && it->type != Token::PERIOD) ++it;
-    return it;
-}
-
 enum IdxOrShape_e {NONE, IDX, SHAPE};
 
 static IdxOrShape_e getIdxOrShape(
@@ -70,6 +63,105 @@ static IdxOrShape_e getIdxOrShape(
     }
 
     return type;
+}
+
+
+Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames)
+    : refiter_type(NONE)
+    , symbol_type(NONE)
+    , state_type(NONE)
+{
+    auto it = begin;
+
+    if (it == end)
+        throw ParseError();
+
+    if (it->type == Token::KW_NULL) {
+        this->refiter_type = KW_NULL;
+    } else {
+        this->refiter_type = ITER;
+
+        auto lbound = it;
+        auto rbound = nextToken(it, end, Token::ARROW);
+        if (rbound == end)
+            throw ParseError();
+
+        this->refiter.parse(lbound, rbound);
+
+        it = rbound;
+        ++it;
+    }
+
+    if (it == end)
+        throw ParseError();
+
+    switch (it->type) {
+    case Token::KW_NULL:
+        this->symbol_type = KW_NULL;
+        break;
+    case Token::KW_SAME:
+        this->symbol_type = KW_SAME;
+        break;
+    default: {
+        this->symbol_type = REF;
+
+        auto lbound = it;
+        auto rbound = nextToken(it, end, Token::COMMA);
+        if (rbound == end)
+            throw ParseError();
+
+        this->symbol.parse(lbound, rbound);
+
+        it = rbound;
+        ++it;
+    }}
+
+    if (it == end)
+        throw ParseError();
+
+    switch (it->type) {
+    case Token::KW_N:
+        this->dir = tur::Direction::None;
+        break;
+    case Token::KW_L:
+        this->dir = tur::Direction::Left;
+        break;
+    case Token::KW_R:
+        this->dir = tur::Direction::Right;
+        break;
+    default:
+        throw ParseError();
+    }
+    ++it;
+
+    if (it == end || it->type != Token::COMMA)
+        throw ParseError();
+    ++it;
+
+    if (it == end)
+        throw ParseError();
+
+    switch (it->type) {
+    case Token::KW_START:
+        this->state_type = KW_START;
+        ++it;
+        break;
+    case Token::KW_END:
+        this->state_type = KW_END;
+        ++it;
+        break;
+    case Token::KW_SAME:
+        this->state_type = KW_SAME;
+        ++it;
+        break;
+    default: {
+        this->state_type = REF;
+        this->state.parse(it, end);
+        it = end;
+    }}
+
+    if (it != end)
+        throw ParseError();
 }
 
 
@@ -147,8 +239,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
 
         if (lval_type == DESC) {
             auto rval_lbound = it;
-            while (it != end && it->type != Token::COMMA) ++it;
-            auto rval_rbound = it;
+            auto rval_rbound = it = nextToken(it, end, Token::COMMA);
             desc.value.parse(rval_lbound, rval_rbound);
 
             this->alph_sym.insert(std::move(desc));
@@ -282,7 +373,7 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
     QList<Token>::const_iterator it = begin, it_period;
 
     while (it != end) {
-        it_period = nextPeriod(it, end);
+        it_period = nextToken(it, end, Token::PERIOD);
         if (it_period == end) throw ParseError();
 
         switch (it->type) {
