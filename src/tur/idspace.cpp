@@ -45,7 +45,7 @@ Range<T>::Range(T first, T last)
         : (uint64_t)(m_last) - (uint64_t)(m_first)
     );
 
-    if (m_size == 0) // (uint64_t)INT64_MAX - (uint64_t)INT64_MIN == 0
+    if (m_size == 0) // (uint64_t)INT64_MAX - (uint64_t)INT64_MIN + 1 == 0
         throw IdInitError{};
 }
 
@@ -258,7 +258,7 @@ idxrange_t IdxRangeEval::eval(const ctx::Context *vars) const
 {
     idxrange_t range(
         this->first->eval(vars),
-        this->last->eval(vars)
+        this->last ? this->last->eval(vars) : this->first->eval(vars) // last == nullptr means 1-length range (first..first)
     );
 
     return range;
@@ -284,23 +284,26 @@ void IdxRangeCatEval::parse(QList<Token>::const_iterator begin, QList<Token>::co
         if (it == end)
             throw ParseError();
 
-        auto rbound = nextToken(it, end, Token::RANGE);
-        if (rbound == end)
-            throw ParseError();
+        auto rbound_range = nextToken(it, end, Token::RANGE);
+        auto rbound_cat = nextToken(it, end, Token::CAT);
+        auto rbound = rbound_range < rbound_cat ? rbound_range : rbound_cat;
+
         rangeeval.setFirst(tur::math::Expression::parse(it, rbound));
-
         it = rbound;
-        ++it;
 
-        rbound = nextToken(it, end, Token::CAT);
-        rangeeval.setLast(tur::math::Expression::parse(it, rbound));
+        if (rbound != end && rbound->type == Token::RANGE) {
+            ++it;
+
+            rbound = nextToken(it, end, Token::CAT);
+            rangeeval.setLast(tur::math::Expression::parse(it, rbound));
+            it = rbound;
+        }
 
         ranges.push_back(std::move(rangeeval));
 
-        if (rbound == end)
+        if (it == end)
             break;
 
-        it = rbound;
         ++it;
     }
 

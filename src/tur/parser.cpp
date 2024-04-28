@@ -14,7 +14,7 @@ static IdxOrShape_e getIdxOrShape(
     tur::id::indexeval_t index_eval;
     tur::id::IdxRangeEval range_eval;
 
-    IdxOrShape_e type = NONE;
+    IdxOrShape_e type = IdxOrShape_e::NONE;
 
     while (it != end && it->type == Token::BRACKET_L) {
         ++it;
@@ -80,19 +80,21 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 
     if (it->type == Token::KW_NULL) {
         this->refiter_type = KW_NULL;
+        ++it;
     } else {
         this->refiter_type = ITER;
 
         auto lbound = it;
         auto rbound = nextToken(it, end, Token::ARROW);
-        if (rbound == end)
-            throw ParseError();
 
         this->refiter.parse(lbound, rbound);
 
         it = rbound;
-        ++it;
     }
+
+    if (it == end || it->type != Token::ARROW)
+        throw ParseError();
+    ++it;
 
     if (it == end)
         throw ParseError();
@@ -171,7 +173,39 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 
 
 StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
-{}
+{
+    auto it = begin;
+
+    if (it == end)
+        throw ParseError();
+
+    switch (it->type) {
+    case Token::KW_START:
+        this->refiter_type = KW_START;
+        ++it;
+        break;
+    case Token::KW_END:
+        this->refiter_type = KW_END;
+        ++it;
+        break;
+    default: {
+        auto rbound = nextToken(it, end, Token::COLON);
+        this->refiter.parse(it, rbound);
+        it = rbound;
+        break;
+    }}
+
+    if (it == end || it->type != Token::COLON)
+        throw ParseError();
+
+    do {
+        ++it;
+        auto rbound = nextToken(it, end, Token::SEMICOLON);
+        Rule rule(it, rbound);
+        this->rules.push_back(std::move(rule));
+        it = rbound;
+    } while (it != end);
+}
 
 
 Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, ctx::Context &context)
@@ -407,7 +441,8 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
             break;
 
         default:
-            this->blocks.emplace_back(it, it_period);
+            StateBlock block(it, it_period);
+            this->blocks.push_back(std::move(block));
         }
 
         it = it_period;

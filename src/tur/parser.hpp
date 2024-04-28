@@ -6,12 +6,13 @@
 
 namespace tur::parser
 {
+    enum desctype_e {NONE, KW_NULL, KW_START, KW_END, KW_SAME, ITER, REF};
+
     class Rule {
     public:
         Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
     private:
-        enum {NONE, KW_NULL, KW_START, KW_END, KW_SAME, ITER, REF}
-            refiter_type, symbol_type, state_type;
+        desctype_e refiter_type, symbol_type, state_type;
         tur::id::IdRefIterEval refiter;
         tur::id::IdRefEval symbol, state;
         tur::Direction dir;
@@ -21,7 +22,8 @@ namespace tur::parser
     public:
         StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
     private:
-        tur::id::IdRefIterEval ref;
+        desctype_e refiter_type;
+        tur::id::IdRefIterEval refiter;
         std::vector<Rule> rules;
     };
 
