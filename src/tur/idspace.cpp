@@ -492,13 +492,26 @@ void IdRefIterEval::setIdx(_idx_t &&idx)
 
 void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {
+    static quint64 anon_counter = 0;
+
     name_t name;
     IdRefIterEval::_idx_t idxeval;
 
     auto it = begin;
 
-    if (it == end || it->type != Token::ID)
+    if (it == end)
         throw ParseError();
+
+    switch (it->type) {
+    case Token::ID:
+        name = it->value.toString();
+        break;
+    case Token::ANON:
+        name = QString("_%1").arg(++anon_counter);
+        break;
+    default:
+        throw ParseError();
+    }
 
     name = it->value.toString();
     ++it;

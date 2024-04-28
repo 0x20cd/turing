@@ -98,23 +98,26 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end,
     switch (it->type) {
     case Token::KW_NULL:
         this->symbol_type = KW_NULL;
+        ++it;
         break;
     case Token::KW_SAME:
         this->symbol_type = KW_SAME;
+        ++it;
         break;
     default: {
         this->symbol_type = REF;
 
         auto lbound = it;
         auto rbound = nextToken(it, end, Token::COMMA);
-        if (rbound == end)
-            throw ParseError();
 
         this->symbol.parse(lbound, rbound);
 
         it = rbound;
-        ++it;
     }}
+
+    if (it == end || it->type != Token::COMMA)
+        throw ParseError();
+    ++it;
 
     if (it == end)
         throw ParseError();
