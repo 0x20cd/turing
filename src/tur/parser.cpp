@@ -66,7 +66,7 @@ static IdxOrShape_e getIdxOrShape(
 }
 
 
-Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames)
+Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
     : refiter_type(NONE)
     , symbol_type(NONE)
     , state_type(NONE)
@@ -168,13 +168,13 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end,
 }
 
 
-StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, const QSet<tur::id::name_t> &allnames)
+StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {}
 
 
-Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames)
-    : alph(0x80'00'00'00)
-    , allnames(allnames)
+Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, ctx::Context &context)
+    : context(context)
+    , alph(0x80'00'00'00)
     , null_value(0)
     , is_null_declared(false)
     , is_null_requested(false)
@@ -217,9 +217,9 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             ref.name = name;
         }
         else {
-            if (this->allnames.contains(name))
-                throw ParseError();
-            this->allnames.insert(name);
+            if (this->context.has(name))
+                throw ctx::NameOccupiedError();
+            this->context.other_names.insert(name);
 
             lval_type = DESC;
             desc.name = name;
@@ -284,9 +284,9 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
 }
 
 
-States::States(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, QSet<tur::id::name_t> &allnames)
-    : states(2)
-    , allnames(allnames)
+States::States(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, ctx::Context &context)
+    : context(context)
+    , states(2)
 {
     if (begin == end)
         throw ParseError();
@@ -321,9 +321,9 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
             ref.name = name;
         }
         else {
-            if (this->allnames.contains(name))
-                throw ParseError();
-            this->allnames.insert(name);
+            if (this->context.has(name))
+                throw ctx::NameOccupiedError();
+            this->context.other_names.insert(name);
 
             lval_type = DESC;
             desc.name = name;
@@ -388,7 +388,7 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
                 throw ParseError();
             ++it;
 
-            this->alph = std::make_unique<Alphabet>(it, it_period, this->allnames);
+            this->alph = std::make_unique<Alphabet>(it, it_period, this->context);
 
             break;
 
@@ -400,12 +400,12 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
                 throw ParseError();
             ++it;
 
-            this->states = std::make_unique<States>(it, it_period, this->allnames);
+            this->states = std::make_unique<States>(it, it_period, this->context);
 
             break;
 
         default:
-            this->blocks.emplace_back(it, it_period, this->allnames);
+            this->blocks.emplace_back(it, it_period);
         }
 
         it = it_period;

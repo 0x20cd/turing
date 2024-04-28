@@ -3,13 +3,18 @@
 using namespace tur;
 using namespace tur::ctx;
 
-Variable::Variable(context_t &context, QString name, number_t value)
+bool Context::has(QString name) const
+{
+    return this->vars.contains(name) || this->other_names.contains(name);
+}
+
+Variable::Variable(Context &context, QString name, number_t value)
     : context(context)
 {
-    if (this->context.contains(name))
-        throw VariableExistsError();
+    if (this->context.has(name))
+        throw NameOccupiedError();
 
-    this->context.insert(name, value);
+    this->context.vars.insert(name, value);
     this->name = name;
 }
 
@@ -22,16 +27,16 @@ Variable::Variable(Variable &&other)
 
 void Variable::operator=(const number_t &rhs)
 {
-    this->context[this->name] = rhs;
+    this->context.vars[this->name] = rhs;
 }
 
 number_t Variable::value() const
 {
-    return this->context.value(this->name);
+    return this->context.vars.value(this->name);
 }
 
 Variable::~Variable()
 {
     if (!this->name.isNull())
-        this->context.remove(this->name);
+        this->context.vars.remove(this->name);
 }

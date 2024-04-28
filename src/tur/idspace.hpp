@@ -121,7 +121,7 @@ namespace tur::id
         void setName(name_t name);
         void setIdxEval(idxeval_t &&idxeval);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
-        IdRef eval(const ctx::context_t *vars = nullptr) const;
+        IdRef eval(const ctx::Context *vars = nullptr) const;
     private:
         name_t name;
         idxeval_t idxeval;
@@ -135,7 +135,7 @@ namespace tur::id
 
         void setFirst(indexeval_t &&first);
         void setLast(indexeval_t &&last);
-        idxrange_t eval(const ctx::context_t *vars = nullptr) const;
+        idxrange_t eval(const ctx::Context *vars = nullptr) const;
     private:
         indexeval_t first, last;
     };
@@ -148,7 +148,7 @@ namespace tur::id
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
 
         bool isEmpty() const;
-        IdxRangeCat eval(const ctx::context_t *vars = nullptr) const;
+        IdxRangeCat eval(const ctx::Context *vars = nullptr) const;
     private:
         std::vector<IdxRangeEval> ranges;
     };
@@ -156,7 +156,7 @@ namespace tur::id
 
     class IndexIter {
     public:
-        IndexIter(ctx::context_t &ctx, name_t name, IdxRangeCat &&rangecat);
+        IndexIter(ctx::Context &ctx, name_t name, IdxRangeCat &&rangecat);
         IndexIter(const IndexIter&) = delete;
         IndexIter(IndexIter &&other);
 
@@ -177,7 +177,7 @@ namespace tur::id
         void setName(name_t name);
         void setRangeCatEval(IdxRangeCatEval &&rangecateval);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
-        IndexIter eval(ctx::context_t &ctx, const idxrange_t &size) const;
+        IndexIter eval(ctx::Context &ctx, const idxrange_t &size) const;
     private:
         name_t name;
         IdxRangeCatEval rangecateval;
@@ -209,7 +209,7 @@ namespace tur::id
         void setName(name_t name);
         void setIdx(_idx_t &&idx);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
-        IdRefIter eval(ctx::context_t &ctx, const shape_t &shape) const;
+        IdRefIter eval(ctx::Context &ctx, const shape_t &shape) const;
     private:
         name_t name;
         _idx_t idx;

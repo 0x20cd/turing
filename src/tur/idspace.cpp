@@ -224,7 +224,7 @@ void IdRefEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
     this->idxeval = std::move(idxeval);
 }
 
-IdRef IdRefEval::eval(const ctx::context_t *vars) const
+IdRef IdRefEval::eval(const ctx::Context *vars) const
 {
     IdRef ref;
 
@@ -254,7 +254,7 @@ void IdxRangeEval::setLast(indexeval_t &&last)
     this->last = std::move(last);
 }
 
-idxrange_t IdxRangeEval::eval(const ctx::context_t *vars) const
+idxrange_t IdxRangeEval::eval(const ctx::Context *vars) const
 {
     idxrange_t range(
         this->first->eval(vars),
@@ -312,7 +312,7 @@ bool IdxRangeCatEval::isEmpty() const
     return this->ranges.empty();
 }
 
-IdxRangeCat IdxRangeCatEval::eval(const ctx::context_t *vars) const
+IdxRangeCat IdxRangeCatEval::eval(const ctx::Context *vars) const
 {
     IdxRangeCat rangecat;
 
@@ -326,7 +326,7 @@ IdxRangeCat IdxRangeCatEval::eval(const ctx::context_t *vars) const
 //////////////////////////////////////////////////
 
 
-IndexIter::IndexIter(ctx::context_t &ctx, name_t name, IdxRangeCat &&rangecat)
+IndexIter::IndexIter(ctx::Context &ctx, name_t name, IdxRangeCat &&rangecat)
     : rangecat(std::move(rangecat))
     , it(this->rangecat.begin())
     , var(ctx, name, *this->it)
@@ -403,7 +403,7 @@ void IndexIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     this->rangecateval.parse(it, end);
 }
 
-IndexIter IndexIterEval::eval(ctx::context_t &ctx, const idxrange_t &size) const
+IndexIter IndexIterEval::eval(ctx::Context &ctx, const idxrange_t &size) const
 {
     IdxRangeCat rangecat;
 
@@ -546,7 +546,7 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     this->idx = std::move(idxeval);
 }
 
-IdRefIter IdRefIterEval::eval(ctx::context_t &ctx, const shape_t &shape) const
+IdRefIter IdRefIterEval::eval(ctx::Context &ctx, const shape_t &shape) const
 {
     IdRefIter::_idx_t idx;
 

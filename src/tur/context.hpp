@@ -5,13 +5,17 @@
 
 namespace tur::ctx
 {
-    using context_t = QHash<QString, number_t>;
+    struct Context {
+        bool has(QString name) const;
+        QHash<QString, number_t> vars;
+        QSet<QString> other_names;
+    };
 
-    struct VariableExistsError {};
+    struct NameOccupiedError {};
 
     class Variable {
     public:
-        Variable(context_t &context, QString name, number_t value = 0);
+        Variable(Context &context, QString name, number_t value = 0);
         Variable(const Variable&) = delete;
         Variable(Variable &&other);
         void operator=(const number_t &rhs);
@@ -19,7 +23,7 @@ namespace tur::ctx
         ~Variable();
 
     private:
-        context_t &context;
+        Context &context;
         QString name;
     };
 }
