@@ -1,11 +1,13 @@
 #include "tur/emulator.hpp"
 #include "tur/parser.hpp"
+#include "tur/context.hpp"
 using namespace tur;
 using namespace tur::parser;
 
 enum IdxOrShape_e {NONE, IDX, SHAPE};
 
 static IdxOrShape_e getIdxOrShape(
+    const ctx::Context *ctx,
     QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
     tur::id::idx_t &idx, tur::id::shape_t *shape)
 {
@@ -49,7 +51,7 @@ static IdxOrShape_e getIdxOrShape(
             index_eval = tur::math::Expression::parse(range_it, expr_rbound);
             range_eval.setLast(std::move(index_eval));
 
-            shape->push_back(range_eval.eval(nullptr));
+            shape->push_back(range_eval.eval(ctx));
         }
         else {
             if (type == SHAPE)
@@ -58,7 +60,7 @@ static IdxOrShape_e getIdxOrShape(
 
             index_eval = tur::math::Expression::parse(expr_lbound, expr_rbound);
 
-            idx.push_back(index_eval->eval(nullptr));
+            idx.push_back(index_eval->eval(ctx));
         }
     }
 
@@ -210,7 +212,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         tur::id::name_t name = it->value.toString();
         ++it;
 
-        auto idx_or_shape = getIdxOrShape(it, end, ref.idx, &desc.shape);
+        auto idx_or_shape = getIdxOrShape(&this->context, it, end, ref.idx, &desc.shape);
 
         if (idx_or_shape == IdxOrShape_e::IDX) {
             lval_type = REF;
@@ -314,7 +316,7 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
         tur::id::name_t name = it->value.toString();
         ++it;
 
-        auto idx_or_shape = getIdxOrShape(it, end, ref.idx, &desc.shape);
+        auto idx_or_shape = getIdxOrShape(&this->context, it, end, ref.idx, &desc.shape);
 
         if (idx_or_shape == IdxOrShape_e::IDX) {
             lval_type = REF;
