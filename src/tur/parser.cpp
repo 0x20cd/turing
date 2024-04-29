@@ -2,17 +2,17 @@
 #include "tur/parser.hpp"
 #include "tur/context.hpp"
 using namespace tur;
-using namespace tur::parser;
+using namespace parser;
 
 enum IdxOrShape_e {NONE, IDX, SHAPE};
 
 static IdxOrShape_e getIdxOrShape(
     const ctx::Context *ctx,
     QList<Token>::const_iterator &it, QList<Token>::const_iterator end,
-    tur::id::idx_t &idx, tur::id::shape_t *shape)
+    id::idx_t &idx, id::shape_t *shape)
 {
-    tur::id::indexeval_t index_eval;
-    tur::id::IdxRangeEval range_eval;
+    id::indexeval_t index_eval;
+    id::IdxRangeEval range_eval;
 
     IdxOrShape_e type = IdxOrShape_e::NONE;
 
@@ -44,11 +44,11 @@ static IdxOrShape_e getIdxOrShape(
                 throw ParseError();
             type = SHAPE;
 
-            index_eval = tur::math::Expression::parse(expr_lbound, range_it);
+            index_eval = math::Expression::parse(expr_lbound, range_it);
             range_eval.setFirst(std::move(index_eval));
 
             ++range_it;
-            index_eval = tur::math::Expression::parse(range_it, expr_rbound);
+            index_eval = math::Expression::parse(range_it, expr_rbound);
             range_eval.setLast(std::move(index_eval));
 
             shape->push_back(range_eval.eval(ctx));
@@ -58,7 +58,7 @@ static IdxOrShape_e getIdxOrShape(
                 throw ParseError();
             type = IDX;
 
-            index_eval = tur::math::Expression::parse(expr_lbound, expr_rbound);
+            index_eval = math::Expression::parse(expr_lbound, expr_rbound);
 
             idx.push_back(index_eval->eval(ctx));
         }
@@ -128,13 +128,13 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 
     switch (it->type) {
     case Token::KW_N:
-        this->dir = tur::Direction::None;
+        this->dir = Direction::None;
         break;
     case Token::KW_L:
-        this->dir = tur::Direction::Left;
+        this->dir = Direction::Left;
         break;
     case Token::KW_R:
-        this->dir = tur::Direction::Right;
+        this->dir = Direction::Right;
         break;
     default:
         throw ParseError();
@@ -228,8 +228,8 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
     if (it == end)
         return false;
 
-    tur::id::IdRef ref;
-    tur::id::SymDesc desc;
+    id::IdRef ref;
+    id::SymDesc desc;
 
     enum {NONE, KW_NULL, DESC, REF} lval_type = NONE;
 
@@ -243,7 +243,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         lval_type = KW_NULL;
     }
     else if (it->type == Token::ID) {
-        tur::id::name_t name = it->value.toString();
+        id::name_t name = it->value.toString();
         ++it;
 
         auto idx_or_shape = getIdxOrShape(&this->context, it, end, ref.idx, &desc.shape);
@@ -337,8 +337,8 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
     if (it == end)
         return false;
 
-    tur::id::IdRef ref;
-    tur::id::IdDesc desc;
+    id::IdRef ref;
+    id::IdDesc desc;
 
     enum {NONE, KW, DESC, REF} lval_type = NONE;
 
@@ -347,7 +347,7 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
         lval_type = KW;
     }
     else if (it->type == Token::ID) {
-        tur::id::name_t name = it->value.toString();
+        id::name_t name = it->value.toString();
         ++it;
 
         auto idx_or_shape = getIdxOrShape(&this->context, it, end, ref.idx, &desc.shape);
@@ -385,10 +385,10 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
 
         switch (it->type) {
         case Token::KW_START:
-            this->states.setAltId(ref, tur::STATE_START);
+            this->states.setAltId(ref, emu::STATE_START);
             break;
         case Token::KW_END:
-            this->states.setAltId(ref, tur::STATE_END);
+            this->states.setAltId(ref, emu::STATE_END);
             break;
         default:
             throw ParseError();

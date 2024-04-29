@@ -1,13 +1,12 @@
 #include <iterator>
 #include "tur/emulator.hpp"
-using tur::Emulator;
-using tur::NoRuleError;
+using namespace tur;
 
 Emulator::Emulator(quint32 symnull)
     : m_symnull(symnull)
 {
     m_symbols.insert(symnull);
-    m_states.insert(STATE_START);
+    m_states.insert(emu::STATE_START);
     this->reset();
 }
 
@@ -17,13 +16,13 @@ void Emulator::reset()
     m_tape.clear();
     m_tape.push_back(m_symnull);
     m_car = m_tape.begin();
-    m_state = STATE_START;
+    m_state = emu::STATE_START;
 }
 
 
-bool Emulator::addRule(const Condition &cond, const Transition &tr)
+bool Emulator::addRule(const emu::Condition &cond, const emu::Transition &tr)
 {
-    if (cond.state == STATE_END)
+    if (cond.state == emu::STATE_END)
         throw std::invalid_argument("Final state is not a real state");
 
     quint64 key = std::bit_cast<quint64>(cond);
@@ -35,7 +34,7 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
     m_symbols.insert(tr.symbol);
 
     m_states.insert(cond.state);
-    if (tr.state != STATE_END)
+    if (tr.state != emu::STATE_END)
         m_states.insert(tr.state);
 
     m_table.insert(key, tr);
@@ -45,10 +44,10 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
 
 void Emulator::step()
 {
-    if (m_state == STATE_END)
+    if (m_state == emu::STATE_END)
         throw std::logic_error("Final state is already reached");
 
-    Condition cond {.state = m_state, .symbol = *m_car};
+    emu::Condition cond {.state = m_state, .symbol = *m_car};
     quint64 key = std::bit_cast<quint64>(cond);
 
     if (!m_table.contains(key))
@@ -97,7 +96,7 @@ const decltype(Emulator::m_tape)& Emulator::tape() const
 }
 
 
-const tur::Transition* Emulator::getRule(const Condition &cond) const
+const emu::Transition* Emulator::getRule(const emu::Condition &cond) const
 {
     quint64 key = std::bit_cast<quint64>(cond);
 

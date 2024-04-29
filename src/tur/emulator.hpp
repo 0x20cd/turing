@@ -7,8 +7,7 @@
 #include <bit>
 #include "common.hpp"
 
-namespace tur {
-    class Loader;
+namespace tur::emu {
 
     struct Condition {
         quint32 state, symbol;
@@ -23,12 +22,16 @@ namespace tur {
 
     constexpr quint32 STATE_START = 1;
     constexpr quint32 STATE_END = 0;
+}
+
+namespace tur {
+    class Loader;
 
     class Emulator
     {
         friend class tur::Loader;
     private:
-        QHash<quint64, Transition> m_table;
+        QHash<quint64, emu::Transition> m_table;
         std::list<quint32> m_tape;
         std::set<quint32> m_symbols;
         std::set<quint32> m_states;
@@ -40,13 +43,13 @@ namespace tur {
         explicit Emulator(quint32 symnull = 0);
 
         void reset();
-        bool addRule(const Condition &cond, const Transition &tr);
+        bool addRule(const emu::Condition &cond, const emu::Transition &tr);
         void step();
 
         quint32 symnull() const;
         quint32 state() const;
         const decltype(m_tape)& tape() const;
-        const Transition* getRule(const Condition &cond) const;
+        const emu::Transition* getRule(const emu::Condition &cond) const;
         const decltype(m_symbols)& symbols() const;
         const decltype(m_states)& states() const;
         decltype(Emulator::m_tape.cbegin()) carriage() const;

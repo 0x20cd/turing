@@ -1,7 +1,7 @@
 #include <exception>
 #include <iterator>
 #include "tur/loader.hpp"
-using tur::Loader;
+using namespace tur;
 
 
 Loader::Loader(Emulator &emu)
@@ -14,10 +14,10 @@ Loader::Loader(Emulator &emu)
 
 bool Loader::loadTable(QString desc, bool preserveTape)
 {
-    tur::Emulator emu;
+    Emulator emu;
 
-    Condition cond;
-    Transition tr;
+    emu::Condition cond;
+    emu::Transition tr;
 
     for (const QString& line : desc.split('\n')) {
         if (line.trimmed().isEmpty())
@@ -44,7 +44,7 @@ bool Loader::loadTable(QString desc, bool preserveTape)
             tr.symbol = sym.toUcs4()[0];
         }
 
-        tr.direction = static_cast<tur::Direction>(match.captured(9)[0].toLatin1());
+        tr.direction = static_cast<Direction>(match.captured(9)[0].toLatin1());
 
         emu.addRule(cond, tr);
     }

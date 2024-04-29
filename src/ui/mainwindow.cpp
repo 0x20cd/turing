@@ -158,7 +158,7 @@ void MainWindow::updateTable()
     for (const uint32_t symbol : symbols) {
         column = 0;
         for (const uint32_t state : states) {
-            auto *tr = emu.getRule(tur::Condition{.state = state, .symbol = symbol});
+            auto *tr = emu.getRule(tur::emu::Condition{.state = state, .symbol = symbol});
             if (!tr) continue;
 
 
@@ -198,7 +198,7 @@ void MainWindow::makeStep()
     updateCellValues();
     updateCurrentState();
 
-    if (emu.state() == tur::STATE_END)
+    if (emu.state() == tur::emu::STATE_END)
         setStatus(HALTED);
 }
 
