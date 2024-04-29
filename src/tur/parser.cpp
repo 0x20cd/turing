@@ -184,10 +184,6 @@ StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_i
         this->refiter_type = KW_START;
         ++it;
         break;
-    case Token::KW_END:
-        this->refiter_type = KW_END;
-        ++it;
-        break;
     default: {
         this->refiter_type = ITER;
         auto rbound = nextToken(it, end, Token::COLON);
