@@ -24,12 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QFile cell_css_f(":/res/cell.css");
-    cell_css_f.open(QFile::ReadOnly);
-    QString cell_css = QString::fromUtf8(cell_css_f.readAll());
-    cell_css_f.close();
-    setStyleSheet(cell_css);
-
     basePow = (1.0 * (T_MAX_MS - T_MIN_MS) / (T_NORMAL_MS - T_MIN_MS) - 1.0);
     basePow *= basePow;
 
@@ -51,20 +45,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-QString MainWindow::sym_repr(char32_t sym, bool useCodes, bool useQuotes)
-{
-    if (std::iswprint(sym)) {
-        QString c = QString::fromUcs4(&sym, 1);
-        if (!useQuotes)
-            return c;
-        return sym == '"' ? "'\"'" : QString("\"%1\"").arg(c);
-    }
-
-    if (useCodes)
-        return QString("U+") + QString::number(sym, 16);
-    return QString();
-}
-
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     updateCellCount();
@@ -73,11 +53,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::updateCellCount()
 {
     int left, right;
-    /*ui->gridLayout->getContentsMargins(&left, nullptr, &right, nullptr);
-    int hspacing = ui->tape->spacing();
-    int tapeWidth = size().width() - (left + right);
-    int count = ui->tape->count(), newCount = (tapeWidth + hspacing - 1) / (Cell::CELL_SIZE + hspacing);*/
-    //int tapeWidth = ui->tapeBox->width();
     ui->gridLayout->getContentsMargins(&left, nullptr, &right, nullptr);
     int tapeWidth = size().width() - (left + right);
     int hspacing = ui->tape->spacing();
@@ -106,13 +81,11 @@ void MainWindow::updateCellValues()
     int cellsCount = ui->tape->count();
     int carCellIndex = cellsCount / 2;
 
-    char32_t symnull = emu.symnull();
-
-    //qDebug() << loader.readTape();
+    auto symnull = emu.symnull();
 
     for (index = 0; index < cellsCount; ++index) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
-        cell->setText(sym_repr(symnull));
+        cell->setValue(symnull, this->emu.alph());
         cell->setSelected(false);
     }
 
@@ -120,14 +93,14 @@ void MainWindow::updateCellValues()
 
     for (it = car, index = carCellIndex; ++it != tape.end() && ++index < cellsCount; ) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
-        cell->setText(sym_repr(*it));
+        cell->setValue(*it, this->emu.alph());
     }
 
-    dynamic_cast<Cell*>(ui->tape->itemAt(carCellIndex)->widget())->setSelected();
+    dynamic_cast<Cell*>(ui->tape->itemAt(carCellIndex)->widget())->setSelected(true);
 
     for (it = car, index = carCellIndex; index >= 0; --it, --index) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
-        cell->setText(sym_repr(*it));
+        cell->setValue(*it, this->emu.alph());
 
         if (it == tape.begin())
             break;
