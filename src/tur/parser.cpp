@@ -189,6 +189,7 @@ StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_i
         ++it;
         break;
     default: {
+        this->refiter_type = ITER;
         auto rbound = nextToken(it, end, Token::COLON);
         this->refiter.parse(it, rbound);
         it = rbound;
@@ -448,4 +449,19 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
         it = it_period;
         ++it;
     }
+}
+
+const parser::Alphabet* Parser::getAlph() const
+{
+    return this->alph.get();
+}
+
+const parser::States* Parser::getStates() const
+{
+    return this->states.get();
+}
+
+const std::vector<parser::StateBlock>& Parser::getBlocks() const
+{
+    return this->blocks;
 }

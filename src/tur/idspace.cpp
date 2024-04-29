@@ -422,6 +422,10 @@ IndexIter IndexIterEval::eval(ctx::Context &ctx, const idxrange_t &size) const
 //////////////////////////////////////////////////
 
 
+IdRefIter::IdRefIter()
+    : is_end(true)
+{}
+
 IdRefIter::IdRefIter(name_t name, _idx_t &&idx)
     : name(name)
     , idx(std::move(idx))
@@ -549,6 +553,11 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     this->idx = std::move(idxeval);
 }
 
+name_t IdRefIterEval::getName() const
+{
+    return this->name;
+}
+
 IdRefIter IdRefIterEval::eval(ctx::Context &ctx, const shape_t &shape) const
 {
     IdRefIter::_idx_t idx;
@@ -643,6 +652,15 @@ IdRef IdSpace::getRef(id_t id) const
     }
 
     return ref;
+}
+
+IdDesc IdSpace::getDesc(name_t name) const
+{
+    if (!this->m_nameToId.contains(name))
+        throw IdAccessError();
+
+    auto id = this->m_nameToId.value(name);
+    return this->m_idToDesc.at(id);
 }
 
 bool IdSpace::contains(name_t name) const

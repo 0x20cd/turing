@@ -1,6 +1,6 @@
 #ifndef TUR_LOADER_HPP
 #define TUR_LOADER_HPP
-#include <QRegularExpression>
+#include <QString>
 #include "tur/emulator.hpp"
 
 namespace tur
@@ -9,10 +9,9 @@ namespace tur
     {
     private:
         Emulator &m_emu;
-        QRegularExpression m_regex;
     public:
         Loader(Emulator &emu);
-        bool loadTable(QString desc, bool preserveTape = true);
+        bool loadTable(QString source, bool preserveTape = true);
         void loadTape(QString input, int carPos = 0);
         QString readTape(bool trim = true) const;
     };

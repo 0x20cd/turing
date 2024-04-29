@@ -189,9 +189,13 @@ namespace tur::id
         using _index_t = std::variant<index_t, IndexIter>;
         using _idx_t = std::vector<_index_t>;
 
+        IdRefIter();
         IdRefIter(name_t name, _idx_t &&idx);
-        bool value(idx_t &idx_out) const;
+
+        IdRefIter& operator=(IdRefIter&&) = default;
         bool next();
+
+        bool value(idx_t &idx_out) const;
     private:
         name_t name;
         _idx_t idx;
@@ -209,6 +213,8 @@ namespace tur::id
         void setName(name_t name);
         void setIdx(_idx_t &&idx);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+
+        name_t getName() const;
         IdRefIter eval(ctx::Context &ctx, const shape_t &shape) const;
     private:
         name_t name;
@@ -226,6 +232,7 @@ namespace tur::id
 
         id_t getId(const IdRef &ref) const;
         IdRef getRef(id_t id) const;
+        IdDesc getDesc(name_t name) const;
 
         bool contains(name_t name) const;
         bool isAlt(id_t id) const;
