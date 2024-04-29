@@ -441,7 +441,7 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
                 throw ParseError();
             ++it;
 
-            this->alph = std::make_unique<Alphabet>(it, it_period, this->context);
+            this->alph = std::make_shared<Alphabet>(it, it_period, this->context);
 
             break;
 
@@ -453,7 +453,7 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
                 throw ParseError();
             ++it;
 
-            this->states = std::make_unique<States>(it, it_period, this->context);
+            this->states = std::make_shared<States>(it, it_period, this->context);
 
             break;
 
@@ -465,19 +465,4 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
         it = it_period;
         ++it;
     }
-}
-
-const parser::Alphabet* Parser::getAlph() const
-{
-    return this->alph.get();
-}
-
-const parser::States* Parser::getStates() const
-{
-    return this->states.get();
-}
-
-const std::vector<parser::StateBlock>& Parser::getBlocks() const
-{
-    return this->blocks;
 }

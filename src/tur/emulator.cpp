@@ -16,11 +16,24 @@ Tape& Tape::operator=(Tape &&rhs)
 }
 
 
-Emulator::Emulator(quint32 symnull)
-    : m_symnull(symnull)
+Emulator::Emulator()
 {
-    m_symbols.insert(symnull);
-    m_states.insert(STATE_START);
+    this->reset();
+}
+
+
+Emulator::Emulator(std::shared_ptr<tur::parser::Alphabet> alph, std::shared_ptr<tur::parser::States> states)
+    : m_alph(alph)
+    , m_states(states)
+{
+    this->init(alph, states);
+}
+
+
+void Emulator::init(std::shared_ptr<tur::parser::Alphabet> alph, std::shared_ptr<tur::parser::States> states)
+{
+    m_alph = alph;
+    m_states = states;
     this->reset();
 }
 
@@ -28,7 +41,7 @@ Emulator::Emulator(quint32 symnull)
 void Emulator::reset()
 {
     m_tape.tape.clear();
-    m_tape.tape.push_back(m_symnull);
+    m_tape.tape.push_back(this->symnull());
     m_tape.car = m_tape.tape.begin();
     m_state = STATE_START;
 }
@@ -43,13 +56,6 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
 
     if (m_table.contains(key))
         return false;
-
-    m_symbols.insert(cond.symbol);
-    m_symbols.insert(tr.symbol);
-
-    m_states.insert(cond.state);
-    if (tr.state != STATE_END)
-        m_states.insert(tr.state);
 
     m_table.insert(key, tr);
     return true;
@@ -75,12 +81,12 @@ void Emulator::step()
     switch (tr.direction) {
     case Left:
         if (m_tape.car == m_tape.tape.begin())
-            m_tape.tape.push_front(m_symnull);
+            m_tape.tape.push_front(m_alph->null_value);
         m_tape.car--;
         break;
     case Right:
         if (m_tape.car == --m_tape.tape.end())
-            m_tape.tape.push_back(m_symnull);
+            m_tape.tape.push_back(m_alph->null_value);
         m_tape.car++;
         break;
     case None:
@@ -94,7 +100,9 @@ void Emulator::step()
 
 quint32 Emulator::symnull() const
 {
-    return m_symnull;
+    if (m_alph)
+        return m_alph->null_value;
+    return 0;
 }
 
 
@@ -121,13 +129,13 @@ const Transition* Emulator::getRule(const Condition &cond) const
 }
 
 
-const decltype(Emulator::m_symbols)& Emulator::symbols() const
+const std::shared_ptr<tur::parser::Alphabet> Emulator::alph() const
 {
-    return m_symbols;
+    return m_alph;
 }
 
 
-const decltype(Emulator::m_states)& Emulator::states() const
+const std::shared_ptr<tur::parser::States> Emulator::states() const
 {
     return m_states;
 }

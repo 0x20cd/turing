@@ -5,7 +5,9 @@
 #include <list>
 #include <set>
 #include <bit>
-#include "common.hpp"
+#include <memory>
+#include "tur/common.hpp"
+#include "tur/parser.hpp"
 
 namespace tur::emu {
 
@@ -39,16 +41,17 @@ namespace tur {
     {
         friend class tur::Loader;
     private:
+        std::shared_ptr<tur::parser::Alphabet> m_alph;
+        std::shared_ptr<tur::parser::States> m_states;
         QHash<quint64, emu::Transition> m_table;
-        std::set<quint32> m_symbols;
-        std::set<quint32> m_states;
         emu::Tape m_tape;
         quint32 m_state;
-        quint32 m_symnull;
 
     public:
-        explicit Emulator(quint32 symnull = 0);
+        Emulator();
+        explicit Emulator(std::shared_ptr<tur::parser::Alphabet> alph, std::shared_ptr<tur::parser::States> states);
 
+        void init(std::shared_ptr<tur::parser::Alphabet> alph, std::shared_ptr<tur::parser::States> states);
         void step();
         void reset();
         bool addRule(const emu::Condition &cond, const emu::Transition &tr);
@@ -57,8 +60,8 @@ namespace tur {
         quint32 state() const;
         const decltype(m_tape.tape)& tape() const;
         const emu::Transition* getRule(const emu::Condition &cond) const;
-        const decltype(m_symbols)& symbols() const;
-        const decltype(m_states)& states() const;
+        const std::shared_ptr<tur::parser::Alphabet> alph() const;
+        const std::shared_ptr<tur::parser::States> states() const;
         decltype(m_tape.tape.cbegin()) carriage() const;
         int carriagePos() const;
     };

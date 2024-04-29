@@ -134,51 +134,27 @@ void MainWindow::updateCellValues()
     }
 }
 
-void MainWindow::updateTable()
-{
-    return;
-
-    const auto &states = emu.states();
-    const auto &symbols = emu.symbols();
-
-    ui->table->clear();
-    ui->table->setColumnCount(states.size());
-    ui->table->setRowCount(symbols.size());
-
-    int index = 0;
-    for (const uint32_t &state : states)
-        ui->table->setHorizontalHeaderItem(index++, new QTableWidgetItem(QString::number(state)));
-
-    index = 0;
-    for (const uint32_t &symbol : symbols) {
-        ui->table->setVerticalHeaderItem(index++, new QTableWidgetItem(sym_repr(symbol, true)));
-    }
-
-
-    int row = 0, column = 0;
-
-    for (const uint32_t symbol : symbols) {
-        column = 0;
-        for (const uint32_t state : states) {
-            auto *tr = emu.getRule(tur::emu::Condition{.state = state, .symbol = symbol});
-            if (!tr) continue;
-
-
-            ui->table->setCellWidget(row, column, new QLabel(
-                QString("%1, %2, %3")
-                      .arg(tr->state)
-                      .arg(sym_repr(tr->symbol, true, true))
-                      .arg((char)tr->direction),
-                nullptr));
-            ++column;
-        }
-        ++row;
-    }
-}
-
 void MainWindow::updateCurrentState()
 {
-    ui->labelState->setText(QString::number(emu.state()));
+    auto state_id = emu.state();
+    const tur::id::IdSpace &states = this->emu.states()->states;
+    QString state_str;
+
+    switch (state_id) {
+    case tur::emu::STATE_START:
+        state_str = "start";
+        break;
+    case tur::emu::STATE_END:
+        state_str = "end";
+        break;
+    default: {
+        auto ref = states.getRef(state_id);
+        state_str = ref.name;
+        for (auto index : ref.idx)
+            state_str += QString("[%1]").arg(index);
+    }}
+
+    ui->labelState->setText(state_str);
 }
 
 void MainWindow::makeStep()
@@ -274,7 +250,6 @@ void MainWindow::on_actionLoadProgram_triggered()
         return;
     }
 
-    updateTable();
     updateCellValues();
     updateCurrentState();
 

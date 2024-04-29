@@ -15,12 +15,12 @@ void Loader::loadTable(QString source, bool preserveTape)
 {
     auto chain = Tokenizer::tokenize(source);
     Parser parser(chain.cbegin(), chain.cend());
-    Emulator emu(parser.getAlph()->null_value);
+    Emulator emu(parser.alph, parser.states);
 
     emu::Condition cond;
     emu::Transition tr;
 
-    for (auto &block : parser.getBlocks()) {
+    for (auto &block : parser.blocks) {
         id::IdRefIter state_iter;
         id::IdRef state_ref;
         id::id_t state_id;
@@ -31,12 +31,12 @@ void Loader::loadTable(QString source, bool preserveTape)
 
             state_iter = block.refiter.eval(
                 parser.context,
-                parser.getStates()->states.getDesc(state_ref.name).shape
+                parser.states->states.getDesc(state_ref.name).shape
             );
 
             state_iter.value(state_ref.idx);
 
-            state_id = parser.getStates()->states.getId(state_ref);
+            state_id = parser.states->states.getId(state_ref);
             break;
 
         case parser::KW_START:
@@ -63,16 +63,16 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     sym_iter = rule.refiter.eval(
                         parser.context,
-                        parser.getAlph()->getIdDesc(sym_ref.name).shape
+                        parser.alph->getIdDesc(sym_ref.name).shape
                     );
 
                     sym_iter.value(sym_ref.idx);
 
-                    sym_id = parser.getAlph()->getId(sym_ref);
+                    sym_id = parser.alph->getId(sym_ref);
                     break;
 
                 case parser::KW_NULL:
-                    sym_id = emu.m_symnull;
+                    sym_id = emu.symnull();
                     break;
 
                 default:
@@ -89,13 +89,13 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     switch (rule.symbol_type) {
                     case parser::REF:
-                        tr.symbol = parser.getAlph()->getId(rule.symbol.eval(&parser.context));
+                        tr.symbol = parser.alph->getId(rule.symbol.eval(&parser.context));
                         break;
                     case parser::KW_SAME:
                         tr.symbol = sym_id;
                         break;
                     case parser::KW_NULL:
-                        tr.symbol = emu.m_symnull;
+                        tr.symbol = emu.symnull();
                         break;
                     default:
                         throw std::logic_error("");
@@ -103,7 +103,7 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     switch (rule.state_type) {
                     case parser::REF:
-                        tr.state = parser.getStates()->states.getId(rule.state.eval(&parser.context));
+                        tr.state = parser.states->states.getId(rule.state.eval(&parser.context));
                         break;
                     case parser::KW_SAME:
                         tr.state = state_id;
@@ -122,13 +122,13 @@ void Loader::loadTable(QString source, bool preserveTape)
                 } while (
                     sym_iter.next()
                     && sym_iter.value(sym_ref.idx)
-                    && (sym_id = parser.getAlph()->getId(sym_ref), true)
+                    && (sym_id = parser.alph->getId(sym_ref), true)
                 );
             }
         } while (
             state_iter.next()
             && state_iter.value(state_ref.idx)
-            && (state_id = parser.getStates()->states.getId(state_ref), true)
+            && (state_id = parser.states->states.getId(state_ref), true)
         );
     }
 
@@ -145,7 +145,7 @@ void Loader::loadTape(QString input, int carPos)
     decltype(m_emu.m_tape.tape) tape(input_list.begin(), input_list.end());
 
     if (tape.empty())
-        tape.push_back(m_emu.m_symnull);
+        tape.push_back(m_emu.symnull());
 
     m_emu.m_tape.tape = std::move(tape);
 
@@ -162,10 +162,10 @@ QString Loader::readTape(bool trim) const
     auto begin = m_emu.m_tape.tape.begin(), end = m_emu.m_tape.tape.end();
 
     if (trim) {
-        while (begin != end && *begin == m_emu.m_symnull) ++begin;
+        while (begin != end && *begin == m_emu.symnull()) ++begin;
         if (begin == end)
             return QString();
-        while (end != begin && *(--end) == m_emu.m_symnull);
+        while (end != begin && *(--end) == m_emu.symnull());
         ++end;
     }
 

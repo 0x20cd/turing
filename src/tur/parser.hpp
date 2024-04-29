@@ -55,18 +55,13 @@ namespace tur::parser
 }
 
 namespace tur {
-    class Parser {
+    struct Parser {
     public:
         Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
 
         tur::ctx::Context context;
-        const parser::Alphabet* getAlph() const;
-        const parser::States* getStates() const;
-        const std::vector<parser::StateBlock>& getBlocks() const;
-
-    private:
-        std::unique_ptr<parser::Alphabet> alph;
-        std::unique_ptr<parser::States> states;
+        std::shared_ptr<parser::Alphabet> alph;
+        std::shared_ptr<parser::States> states;
         std::vector<parser::StateBlock> blocks;
     };
 }
