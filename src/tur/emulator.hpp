@@ -4,6 +4,7 @@
 #include <QHash>
 #include <list>
 #include <set>
+#include <bit>
 #include "common.hpp"
 
 namespace tur {

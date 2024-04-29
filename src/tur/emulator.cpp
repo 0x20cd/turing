@@ -26,7 +26,7 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
     if (cond.state == STATE_END)
         throw std::invalid_argument("Final state is not a real state");
 
-    const quint64 &key = *(quint64*)(&cond);
+    quint64 key = std::bit_cast<quint64>(cond);
 
     if (m_table.contains(key))
         return false;
@@ -49,7 +49,7 @@ void Emulator::step()
         throw std::logic_error("Final state is already reached");
 
     Condition cond {.state = m_state, .symbol = *m_car};
-    const quint64 &key = *(quint64*)(&cond);
+    quint64 key = std::bit_cast<quint64>(cond);
 
     if (!m_table.contains(key))
         throw NoRuleError();
@@ -99,7 +99,8 @@ const decltype(Emulator::m_tape)& Emulator::tape() const
 
 const tur::Transition* Emulator::getRule(const Condition &cond) const
 {
-    const quint64 &key = *(quint64*)(&cond);
+    quint64 key = std::bit_cast<quint64>(cond);
+
     if (!m_table.contains(key))
         return nullptr;
 
