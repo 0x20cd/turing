@@ -49,15 +49,17 @@ namespace tur::parser
         ctx::Context &context;
         tur::id::IdSpace states;
     };
+}
 
+namespace tur {
     class Parser {
     public:
         Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
     private:
         tur::ctx::Context context;
-        std::unique_ptr<Alphabet> alph;
-        std::unique_ptr<States> states;
-        std::vector<StateBlock> blocks;
+        std::unique_ptr<parser::Alphabet> alph;
+        std::unique_ptr<parser::States> states;
+        std::vector<parser::StateBlock> blocks;
     };
 }
 
