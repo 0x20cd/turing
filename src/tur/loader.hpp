@@ -11,7 +11,7 @@ namespace tur
         Emulator &m_emu;
     public:
         Loader(Emulator &emu);
-        bool loadTable(QString source, bool preserveTape = true);
+        void loadTable(QString source, bool preserveTape = true);
         void loadTape(QString input, int carPos = 0);
         QString readTape(bool trim = true) const;
     };

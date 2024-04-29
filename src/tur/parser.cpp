@@ -220,6 +220,26 @@ Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_itera
 }
 
 
+id::IdDesc Alphabet::getIdDesc(id::name_t name) const
+{
+    if (this->alph_sym.contains(name)) {
+        return this->alph_sym.getDesc(name);
+    } else {
+        return this->alph.getDesc(name);
+    }
+}
+
+
+id::id_t Alphabet::getId(const id::IdRef &ref) const
+{
+    if (this->alph_sym.contains(ref.name)) {
+        return (id::id_t)this->alph_sym.getSym(ref);
+    } else {
+        return this->alph.getId(ref);
+    }
+}
+
+
 bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::const_iterator end)
 {
     if (it == end)

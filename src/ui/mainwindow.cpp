@@ -10,7 +10,7 @@
 #include "ui_mainwindow.h"
 
 const int MainWindow::T_NORMAL_MS = 1000;
-const int MainWindow::T_MIN_MS = 10;
+const int MainWindow::T_MIN_MS = 0;
 const int MainWindow::T_MAX_MS = 3000;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -136,6 +136,8 @@ void MainWindow::updateCellValues()
 
 void MainWindow::updateTable()
 {
+    return;
+
     const auto &states = emu.states();
     const auto &symbols = emu.symbols();
 
@@ -195,11 +197,13 @@ void MainWindow::makeStep()
     if (status != RUNNING)
         setStatus(PAUSED);
 
-    updateCellValues();
-    updateCurrentState();
-
     if (emu.state() == tur::emu::STATE_END)
         setStatus(HALTED);
+
+    if (status != RUNNING || this->stepTimer.interval() > T_MIN_MS) {
+        updateCellValues();
+        updateCurrentState();
+    }
 }
 
 void MainWindow::setStatus(Status status)
@@ -217,7 +221,6 @@ void MainWindow::setStatus(Status status)
         ui->buttonReset->setEnabled(false);
         ui->buttonStep->setEnabled(false);
     } else {
-//        ui->table->setModel(&tableModel);
         ui->buttonPlayPause->setEnabled(status != HALTED);
         ui->buttonReset->setEnabled(status != RUNNING);
         ui->buttonStep->setEnabled(status != RUNNING && status != HALTED);
@@ -261,10 +264,12 @@ void MainWindow::on_actionLoadProgram_triggered()
 
     QFile file(filename);
     file.open(QFile::ReadOnly);
-    QString desc = QString::fromUtf8(file.readAll());
+    QString source = QString::fromUtf8(file.readAll());
     file.close();
 
-    if (!loader.loadTable(desc)) {
+    try {
+        this->loader.loadTable(source, false);
+    } catch (const tur::ParseError &e) {
         QMessageBox::critical(this, tr("Error"), tr("Failed to load program!"));
         return;
     }

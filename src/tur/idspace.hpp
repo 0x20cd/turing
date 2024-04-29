@@ -290,6 +290,7 @@ namespace tur::id
         SymSpace() = default;
         void insert(SymDesc &&desc);
         sym_t getSym(const IdRef &ref) const;
+        const SymDesc& getDesc(name_t name) const;
         bool contains(name_t name) const;
     private:
         std::unordered_map<name_t, SymDesc> m_nameToDesc;

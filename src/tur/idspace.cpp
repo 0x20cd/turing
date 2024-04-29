@@ -859,7 +859,14 @@ sym_t SymSpace::getSym(const IdRef &ref) const
         throw IdAccessError{};
 
     return desc.value[pos];
+}
 
+const SymDesc& SymSpace::getDesc(name_t name) const
+{
+    if (!this->m_nameToDesc.contains(name))
+        throw IdAccessError();
+
+    return this->m_nameToDesc.at(name);
 }
 
 bool SymSpace::contains(name_t name) const

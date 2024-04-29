@@ -11,7 +11,7 @@ Loader::Loader(Emulator &emu)
 {}
 
 
-bool Loader::loadTable(QString source, bool preserveTape)
+void Loader::loadTable(QString source, bool preserveTape)
 {
     auto chain = Tokenizer::tokenize(source);
     Parser parser(chain.cbegin(), chain.cend());
@@ -20,13 +20,122 @@ bool Loader::loadTable(QString source, bool preserveTape)
     emu::Condition cond;
     emu::Transition tr;
 
-    // TODO
+    for (auto &block : parser.getBlocks()) {
+        id::IdRefIter state_iter;
+        id::IdRef state_ref;
+        id::id_t state_id;
+
+        switch (block.refiter_type) {
+        case parser::ITER:
+            state_ref.name = block.refiter.getName();
+
+            state_iter = block.refiter.eval(
+                parser.context,
+                parser.getStates()->states.getDesc(state_ref.name).shape
+            );
+
+            state_iter.value(state_ref.idx);
+
+            state_id = parser.getStates()->states.getId(state_ref);
+            break;
+
+        case parser::KW_START:
+            state_id = emu::STATE_START;
+            break;
+
+        default:
+            throw std::logic_error("");
+        }
+
+        do {
+            if (state_id == emu::STATE_END) {
+                continue;
+            }
+
+            for (auto &rule : block.rules) {
+                id::IdRefIter sym_iter;
+                id::IdRef sym_ref;
+                id::id_t sym_id;
+
+                switch (rule.refiter_type) {
+                case parser::ITER:
+                    sym_ref.name = rule.refiter.getName();
+
+                    sym_iter = rule.refiter.eval(
+                        parser.context,
+                        parser.getAlph()->getIdDesc(sym_ref.name).shape
+                    );
+
+                    sym_iter.value(sym_ref.idx);
+
+                    sym_id = parser.getAlph()->getId(sym_ref);
+                    break;
+
+                case parser::KW_NULL:
+                    sym_id = emu.m_symnull;
+                    break;
+
+                default:
+                    throw std::logic_error("");
+                }
+
+                do {
+                    emu::Condition cond {.state = state_id, .symbol = sym_id};
+
+                    if (emu.getRule(cond) != nullptr)
+                        continue;
+
+                    tur::emu::Transition tr {.direction = rule.dir};
+
+                    switch (rule.symbol_type) {
+                    case parser::REF:
+                        tr.symbol = parser.getAlph()->getId(rule.symbol.eval(&parser.context));
+                        break;
+                    case parser::KW_SAME:
+                        tr.symbol = sym_id;
+                        break;
+                    case parser::KW_NULL:
+                        tr.symbol = emu.m_symnull;
+                        break;
+                    default:
+                        throw std::logic_error("");
+                    }
+
+                    switch (rule.state_type) {
+                    case parser::REF:
+                        tr.state = parser.getStates()->states.getId(rule.state.eval(&parser.context));
+                        break;
+                    case parser::KW_SAME:
+                        tr.state = state_id;
+                        break;
+                    case parser::KW_START:
+                        tr.state = tur::emu::STATE_START;
+                        break;
+                    case parser::KW_END:
+                        tr.state = tur::emu::STATE_END;
+                        break;
+                    default:
+                        throw std::logic_error("");
+                    }
+
+                    emu.addRule(cond, tr);
+                } while (
+                    sym_iter.next()
+                    && sym_iter.value(sym_ref.idx)
+                    && (sym_id = parser.getAlph()->getId(sym_ref), true)
+                );
+            }
+        } while (
+            state_iter.next()
+            && state_iter.value(state_ref.idx)
+            && (state_id = parser.getStates()->states.getId(state_ref), true)
+        );
+    }
 
     if (preserveTape)
-        emu.m_tape = std::move(m_emu.m_tape);
+        emu.m_tape = std::move(this->m_emu.m_tape);
 
-    m_emu = std::move(emu);
-    return true;
+    this->m_emu = std::move(emu);
 }
 
 

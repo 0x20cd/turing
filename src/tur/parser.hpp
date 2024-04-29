@@ -28,6 +28,9 @@ namespace tur::parser
     struct Alphabet {
         Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, ctx::Context &context);
 
+        tur::id::IdDesc getIdDesc(tur::id::name_t name) const;
+        tur::id::id_t getId(const tur::id::IdRef &ref) const;
+
         tur::id::IdSpace alph;
         tur::id::SymSpace alph_sym;
         tur::id::id_t null_value;
