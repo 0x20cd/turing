@@ -121,8 +121,14 @@ void MainWindow::makeStep()
 
     try {
         emu.step();
-    } catch (const tur::NoRuleError&) {
-        QMessageBox::critical(this, tr("Error"), tr("Behaviour is not defined for current state"));
+    } catch (const tur::NoRuleError &e) {
+        QMessageBox::critical(
+            this,
+            tr("Error"),
+            tr("Behaviour is not defined for state %1 and symbol %2")
+                .arg(e.state)
+                .arg(e.symbol)
+        );
         setStatus(HALTED);
         return;
     }

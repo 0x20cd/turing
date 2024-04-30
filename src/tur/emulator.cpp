@@ -72,8 +72,11 @@ void Emulator::step()
     quint64 key = std::bit_cast<quint64>(cond);
 
     if (!m_table.contains(key)) {
+        bool named;
+        QString symbol_s = utils::symbolToString(cond.symbol, this->alph(), &named);
+
         throw NoRuleError{
-            .symbol = utils::symbolToString(cond.symbol, this->alph()),
+            .symbol = named ? symbol_s : QString("'%1'").arg(symbol_s),
             .state = utils::stateToString(cond.state, this->states())
         };
     }
