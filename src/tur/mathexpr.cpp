@@ -93,7 +93,10 @@ std::unique_ptr<IEvaluable> Expression::parse(QList<Token>::const_iterator begin
             op = Expression::sub;
             break;
         default:
-            throw ExprError();
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Unexpected token")
+            }};
         }
 
         ++it;
@@ -192,8 +195,12 @@ std::unique_ptr<IEvaluable> Expression::next_val(QList<Token>::const_iterator &i
                 break;
         }
 
-        if (it == end)
-            throw ExprError();
+        if (it == end) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected ')'")
+            }};
+        }
 
         subexpr_end = it;
         res = Expression::parse(subexpr_begin, subexpr_end);
@@ -208,7 +215,10 @@ std::unique_ptr<IEvaluable> Expression::next_val(QList<Token>::const_iterator &i
         ++it;
         break;
     default:
-        throw ExprError();
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Unexpected token")
+        }};
     }
 
     if (is_neg) res->inv_sign();

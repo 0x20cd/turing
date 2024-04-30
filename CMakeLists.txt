@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
     src/tur/idspace.hpp src/tur/idspace.cpp
     src/tur/context.hpp src/tur/context.cpp
     src/tur/parser.hpp src/tur/parser.cpp
+    src/tur/utils.hpp src/tur/utils.cpp
 )
 
 qt_add_executable(app-turing

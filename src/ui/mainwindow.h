@@ -9,6 +9,7 @@
 #include <QTableWidgetItem>
 #include "tur/emulator.hpp"
 #include "tur/loader.hpp"
+#include "tur/utils.hpp"
 
 namespace Ui {
 class MainWindow;

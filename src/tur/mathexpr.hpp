@@ -16,13 +16,7 @@
 
 namespace tur::math
 {
-    struct ExprError {
-        SourceRef srcRef;
-    };
-
-    struct EvalError {
-        SourceRef srcRef;
-    };
+    struct EvalError : CommonError {};
 
 
     class IEvaluable

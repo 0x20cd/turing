@@ -1,5 +1,6 @@
 #include <iterator>
 #include "tur/emulator.hpp"
+#include "tur/utils.hpp"
 using namespace tur;
 using namespace tur::emu;
 
@@ -70,8 +71,12 @@ void Emulator::step()
     Condition cond {.state = m_state, .symbol = *m_tape.car};
     quint64 key = std::bit_cast<quint64>(cond);
 
-    if (!m_table.contains(key))
-        throw NoRuleError();
+    if (!m_table.contains(key)) {
+        throw NoRuleError{
+            .symbol = utils::symbolToString(cond.symbol, this->alph()),
+            .state = utils::stateToString(cond.state, this->states())
+        };
+    }
 
     auto &tr = m_table[key];
 
@@ -152,5 +157,3 @@ int Emulator::carriagePos() const
     return std::distance<decltype(m_tape.tape.cbegin())>(m_tape.tape.cbegin(), m_tape.car);
 }
 
-
-NoRuleError::NoRuleError() : std::runtime_error("Behaviour is not defined for current state") {}

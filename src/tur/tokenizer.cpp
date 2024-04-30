@@ -19,25 +19,23 @@ QList<Token> Tokenizer::tokenize(QString source)
     QList<Token> chain;
 
     auto it = source.cbegin(), row_begin = source.cbegin(), tok_begin = source.cbegin();
-    int row = 1;
+    SourceRef srcRef{.row = 1};
 
     while (true)
     {
         while (it != source.cend() && it->isSpace()) {
             if (*(it++) == '\n') {
                 row_begin = it;
-                ++row;
+                ++srcRef.row;
             }
         }
+
+        tok_begin = it;
+        srcRef.col = tok_begin - row_begin + 1;
 
         if (it == source.cend())
             break;
 
-        tok_begin = it;
-        SourceRef srcRef {
-            .row = row,
-            .col = tok_begin - row_begin + 1
-        };
         QStringView tail(&(*it), source.cend() - it);
 
         Token::Type type = Token::NONE;
@@ -79,16 +77,20 @@ QList<Token> Tokenizer::tokenize(QString source)
             continue;
         }
 
-        Token token = nextLiteral(tail, it);
+        Token token = nextLiteral(tail, it, srcRef);
         if (token.type != Token::NONE) {
             token.srcRef = srcRef;
             chain.push_back(token);
             continue;
         }
 
-        throw TokenizerError{.srcRef = srcRef};
+        throw TokenizerError{ CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Unexpected character '%1'").arg(*it)
+        }};
     }
 
+    chain.push_back(Token{.type = Token::NONE, .srcRef = srcRef});
     return chain;
 }
 
@@ -106,7 +108,7 @@ QString Tokenizer::nextName(QStringView tail, QString::const_iterator &it)
     return QString();
 }
 
-Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it)
+Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it, SourceRef srcRef)
 {
     static QRegularExpression sym_re(R"raw((["'])|([^"'\n\\])|\\(["'\\])|\\u\{([0-9a-fA-F]{1,6})\}|.)raw");
     static QRegularExpression num_re(R"raw(^[0-9]+)raw");
@@ -122,7 +124,12 @@ Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it)
         token.type = Token::NUMBER;
         token.value = view.toLongLong(&ok);
 
-        if (!ok) throw TokenizerError();
+        if (!ok) {
+            throw TokenizerError{ CommonError{
+                .srcRef = srcRef,
+                .msg = QObject::tr("Numeric value is too large")
+            }};
+        }
 
         it += view.size();
         return token;
@@ -173,9 +180,15 @@ Token Tokenizer::nextLiteral(QStringView tail, QString::const_iterator &it)
             value.append(QString::fromUcs4(&sym, 1));
         }
         else {
-            throw TokenizerError();
+            throw TokenizerError{ CommonError{
+                .srcRef = srcRef,
+                .msg = QObject::tr("Invalid character '%1' in string literal").arg(match.capturedView())
+            }};
         }
     }
 
-    throw TokenizerError(); // string literal was not terminated
+    throw TokenizerError{ CommonError{
+        .srcRef = srcRef,
+        .msg = QObject::tr("String literal has not been terminated")
+    }};
 }

@@ -26,7 +26,11 @@ namespace tur
 
     enum Direction {None, Left, Right};
 
-    struct ParseError {};
+    struct CommonError {
+        SourceRef srcRef;
+        QString msg;
+    };
+    struct ParseError : CommonError {};
 
     inline QList<Token>::const_iterator nextToken(QList<Token>::const_iterator it, QList<Token>::const_iterator end, Token::Type type)
     {

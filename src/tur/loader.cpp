@@ -14,7 +14,8 @@ Loader::Loader(Emulator &emu)
 void Loader::loadTable(QString source, bool preserveTape)
 {
     auto chain = Tokenizer::tokenize(source);
-    Parser parser(chain.cbegin(), chain.cend());
+
+    Parser parser(chain.cbegin(), chain.cend() - 1);
     Emulator emu(parser.alph, parser.states);
 
     emu::Condition cond;

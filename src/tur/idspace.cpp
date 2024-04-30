@@ -34,7 +34,7 @@ static bool idxToPos(idx_t idx, shape_t shape, uint64_t &pos_r)
 
 
 template <typename T>
-Range<T>::Range(T first, T last)
+Range<T>::Range(T first, T last, SourceRef srcRef)
     : m_first(first)
     , m_last(last)
     , is_inv(first > last)
@@ -45,8 +45,12 @@ Range<T>::Range(T first, T last)
         : (uint64_t)(m_last) - (uint64_t)(m_first)
     );
 
-    if (m_size == 0) // (uint64_t)INT64_MAX - (uint64_t)INT64_MIN + 1 == 0
-        throw IdInitError{};
+    if (m_size == 0) { // (uint64_t)INT64_MAX - (uint64_t)INT64_MIN + 1 == 0
+        throw IdInitError{ CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Range is too large")
+        }};
+    }
 }
 
 template <typename T>
@@ -201,19 +205,28 @@ void IdRefEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
     auto it = begin;
 
     if (it == end || it->type != Token::ID)
-        throw ParseError();
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected identifier")
+        }};
 
     name = it->value.toString();
     ++it;
 
     while (it != end) {
         if (it->type != Token::BRACKET_L)
-            throw ParseError();
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected '['")
+            }};
         ++it;
 
         auto lbound = it, rbound = nextToken(it, end, Token::BRACKET_R);
         if (rbound == end)
-            throw ParseError();
+            throw ParseError{ CommonError {
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Bracket has not been closed with ']'")
+            }};
         it = rbound;
         ++it;
 
@@ -254,11 +267,17 @@ void IdxRangeEval::setLast(indexeval_t &&last)
     this->last = std::move(last);
 }
 
+void IdxRangeEval::setSrcRef(SourceRef srcRef)
+{
+    this->srcRef = srcRef;
+}
+
 idxrange_t IdxRangeEval::eval(const ctx::Context *vars) const
 {
     idxrange_t range(
         this->first->eval(vars),
-        this->last ? this->last->eval(vars) : this->first->eval(vars) // last == nullptr means 1-length range (first..first)
+        this->last ? this->last->eval(vars) : this->first->eval(vars), // last == nullptr means 1-length range (first..first)
+        this->srcRef
     );
 
     return range;
@@ -281,13 +300,18 @@ void IdxRangeCatEval::parse(QList<Token>::const_iterator begin, QList<Token>::co
     auto it = begin;
 
     while (true) {
-        if (it == end)
-            throw ParseError();
+        if (it == end) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected index range")
+            }};
+        }
 
         auto rbound_range = nextToken(it, end, Token::RANGE);
         auto rbound_cat = nextToken(it, end, Token::CAT);
         auto rbound = rbound_range < rbound_cat ? rbound_range : rbound_cat;
 
+        rangeeval.setSrcRef(it->srcRef);
         rangeeval.setFirst(tur::math::Expression::parse(it, rbound));
         it = rbound;
 
@@ -329,10 +353,10 @@ IdxRangeCat IdxRangeCatEval::eval(const ctx::Context *vars) const
 //////////////////////////////////////////////////
 
 
-IndexIter::IndexIter(ctx::Context &ctx, name_t name, IdxRangeCat &&rangecat)
+IndexIter::IndexIter(ctx::Context &ctx, SourceRef srcRef, name_t name, IdxRangeCat &&rangecat)
     : rangecat(std::move(rangecat))
     , it(this->rangecat.begin())
-    , var(ctx, name, *this->it)
+    , var(ctx, srcRef, name, *this->it)
 {}
 
 IndexIter::IndexIter(IndexIter &&other)
@@ -388,21 +412,38 @@ void IndexIterEval::setRangeCatEval(IdxRangeCatEval &&rangecateval)
 
 void IndexIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {
+    static quint64 anon_counter = 0;
+
     auto it = begin;
 
-    if (it == end || it->type != Token::ID)
-        throw ParseError();
+    switch (it->type) {
+    case Token::ID:
+        this->name = it->value.toString();
+        break;
+    case Token::ANON:
+        this->name = QString("_%1").arg(++anon_counter);
+        break;
+    default:
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected identifier or '_'")
+        }};
+    }
 
-    this->name = it->value.toString();
     ++it;
 
     if (it == end)
         return;
 
-    if (it->type != Token::ITER)
-        throw ParseError();
+    if (it->type != Token::ITER) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected '|'")
+        }};
+    }
     ++it;
 
+    this->srcRef = begin->srcRef;
     this->rangecateval.parse(it, end);
 }
 
@@ -415,7 +456,7 @@ IndexIter IndexIterEval::eval(ctx::Context &ctx, const idxrange_t &size) const
     else
         rangecat = this->rangecateval.eval(&ctx);
 
-    return IndexIter(ctx, this->name, std::move(rangecat));
+    return IndexIter(ctx, this->srcRef, this->name, std::move(rangecat));
 }
 
 
@@ -499,25 +540,16 @@ void IdRefIterEval::setIdx(_idx_t &&idx)
 
 void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {
-    static quint64 anon_counter = 0;
-
     name_t name;
     IdRefIterEval::_idx_t idxeval;
 
     auto it = begin;
 
-    if (it == end)
-        throw ParseError();
-
-    switch (it->type) {
-    case Token::ID:
-        name = it->value.toString();
-        break;
-    case Token::ANON:
-        name = QString("_%1").arg(++anon_counter);
-        break;
-    default:
-        throw ParseError();
+    if (it == end || it->type != Token::ID) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected identifier")
+        }};
     }
 
     name = it->value.toString();
@@ -527,8 +559,12 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
         if (it->type == Token::BRACKET_L) {
             ++it;
             auto lbound = it, rbound = nextToken(it, end, Token::BRACKET_R);
-            if (rbound == end)
-                throw ParseError();
+            if (rbound == end) {
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Bracket has not been closed with ']'")
+                }};
+            }
             it = rbound;
             ++it;
 
@@ -538,7 +574,10 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
             ++it;
             auto lbound = it, rbound = nextToken(it, end, Token::BRACE_R);
             if (rbound == end)
-                throw ParseError();
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Brace has not been closed with '}'")
+                }};
             it = rbound;
             ++it;
 
@@ -546,7 +585,12 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
             iditereval.parse(lbound, rbound);
             idxeval.push_back(std::move(iditereval));
         }
-        else throw ParseError();
+        else {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected '[' or '{'")
+            }};
+        }
     }
 
     this->name = name;
@@ -750,7 +794,10 @@ void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
     for (auto it = begin; true; ++it) {
         if (it == end || it->type == Token::CAT) {
             if (expected != CAT_OR_END && expected != ANY_OP)
-                throw ParseError();
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Expected string literal")
+                }};
 
             if (it_val_2 == end) {
                 auto value = it_val_1->value.toString();
@@ -764,10 +811,13 @@ void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
                 auto rvalue = it_val_2->value.toString().toUcs4();
 
                 if (lvalue.size() != 1 || rvalue.size() != 1)
-                    throw ParseError();
+                    throw ParseError{ CommonError{
+                        .srcRef = it_val_1->srcRef,
+                        .msg = QObject::tr("String range operands must be of length 1")
+                    }};
 
                 this->append(std::unique_ptr<istring_t>(
-                    new symrange_t{lvalue.front(), rvalue.front()}
+                    new symrange_t{lvalue.front(), rvalue.front(), it_val_1->srcRef}
                 ));
             }
 
@@ -786,20 +836,32 @@ void StringCat::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
             } else if (expected == RBOUND) {
                 it_val_2 = it;
                 expected = CAT_OR_END;
-            } else throw ParseError();
+            } else {
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Unexpected string literal")
+                }};
+            }
 
             continue;
 
         case Token::RANGE:
-            if (expected != ANY_OP)
-                throw ParseError();
+            if (expected != ANY_OP) {
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Unexpected '..'")
+                }};
+            }
 
             expected = RBOUND;
 
             continue;
 
         default:
-            throw ParseError();
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Unexpected token")
+            }};
         }
     }
 }

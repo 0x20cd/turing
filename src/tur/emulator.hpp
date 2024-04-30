@@ -66,9 +66,8 @@ namespace tur {
         int carriagePos() const;
     };
 
-    class NoRuleError : std::runtime_error {
-    public:
-        NoRuleError();
+    struct NoRuleError {
+        QString symbol, state;
     };
 }
 

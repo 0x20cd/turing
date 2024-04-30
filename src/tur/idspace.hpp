@@ -12,14 +12,8 @@
 
 namespace tur::id
 {
-    struct IdInitError {
-        SourceRef srcRef;
-    };
-
-    struct IdAccessError {
-        SourceRef srcRef;
-    };
-
+    struct IdInitError : CommonError {};
+    struct IdAccessError : CommonError {};
 
     template <typename T>
     class IArray
@@ -33,7 +27,7 @@ namespace tur::id
     template <typename T>
     class Range : public IArray<T> {
     public:
-        Range(T first, T last);
+        Range(T first, T last, SourceRef srcRef);
 
         bool next(T &value) const;
         bool contains(T value) const;
@@ -135,9 +129,11 @@ namespace tur::id
 
         void setFirst(indexeval_t &&first);
         void setLast(indexeval_t &&last);
+        void setSrcRef(SourceRef srcRef);
         idxrange_t eval(const ctx::Context *vars = nullptr) const;
     private:
         indexeval_t first, last;
+        SourceRef srcRef;
     };
 
     class IdxRangeCatEval {
@@ -156,7 +152,7 @@ namespace tur::id
 
     class IndexIter {
     public:
-        IndexIter(ctx::Context &ctx, name_t name, IdxRangeCat &&rangecat);
+        IndexIter(ctx::Context &ctx, SourceRef srcRef, name_t name, IdxRangeCat &&rangecat);
         IndexIter(const IndexIter&) = delete;
         IndexIter(IndexIter &&other);
 
@@ -179,6 +175,7 @@ namespace tur::id
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
         IndexIter eval(ctx::Context &ctx, const idxrange_t &size) const;
     private:
+        SourceRef srcRef;
         name_t name;
         IdxRangeCatEval rangecateval;
     };

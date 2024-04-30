@@ -109,25 +109,9 @@ void MainWindow::updateCellValues()
 
 void MainWindow::updateCurrentState()
 {
-    auto state_id = emu.state();
-    const tur::id::IdSpace &states = this->emu.states()->states;
-    QString state_str;
-
-    switch (state_id) {
-    case tur::emu::STATE_START:
-        state_str = "start";
-        break;
-    case tur::emu::STATE_END:
-        state_str = "end";
-        break;
-    default: {
-        auto ref = states.getRef(state_id);
-        state_str = ref.name;
-        for (auto index : ref.idx)
-            state_str += QString("[%1]").arg(index);
-    }}
-
-    ui->labelState->setText(state_str);
+    ui->labelState->setText(
+        tur::utils::stateToString(emu.state(), this->emu.states())
+    );
 }
 
 void MainWindow::makeStep()
@@ -218,8 +202,14 @@ void MainWindow::on_actionLoadProgram_triggered()
 
     try {
         this->loader.loadTable(source, false);
-    } catch (const tur::ParseError &e) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to load program!"));
+    } catch (const tur::CommonError &e) {
+        QMessageBox::critical(
+            this, tr("Error"),
+            QString{"Row %1, column %2:\n%3"}
+                .arg(e.srcRef.row)
+                .arg(e.srcRef.col)
+                .arg(e.msg)
+        );
         return;
     }
 

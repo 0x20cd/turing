@@ -1,5 +1,6 @@
 #include <cwctype>
 #include "cell.h"
+#include "tur/utils.hpp"
 
 const int Cell::CELL_SIZE = 50;
 const QLatin1StringView Cell::CSS{
@@ -25,26 +26,12 @@ Cell::Cell(QWidget *parent)
 
 void Cell::setValue(quint32 sym, std::shared_ptr<tur::parser::Alphabet> alph)
 {
-    if (sym & 0x80000000) {
-        QString sym_str = "???";
+    bool named;
+    QString sym_str = tur::utils::symbolToString(sym, alph, &named);
 
-        if (alph) {
-            auto ref = alph->alph.getRef(sym);
-
-            sym_str = ref.name;
-            for (auto index : ref.idx)
-                sym_str += QString("[%1]").arg(index);
-        }
-
-        this->setNamed(true);
-        this->setText(sym_str);
-        this->setToolTip(sym_str);
-    }
-    else {
-        this->setNamed(false);
-        this->setText(std::iswprint(sym) ? QString::fromUcs4((char32_t*)&sym, 1) : QString{});
-        this->setToolTip(QString{});
-    }
+    this->setNamed(named);
+    this->setText(sym_str);
+    this->setToolTip(named ? sym_str : QString{});
 }
 
 void Cell::setSelected(bool selected)

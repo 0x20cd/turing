@@ -11,11 +11,11 @@ namespace tur::ctx
         QSet<QString> other_names;
     };
 
-    struct NameOccupiedError {};
+    struct NameOccupiedError : CommonError {};
 
     class Variable {
     public:
-        Variable(Context &context, QString name, number_t value = 0);
+        Variable(Context &context, SourceRef srcRef, QString name, number_t value = 0);
         Variable(const Variable&) = delete;
         Variable(Variable &&other);
         void operator=(const number_t &rhs);
@@ -24,6 +24,7 @@ namespace tur::ctx
 
     private:
         Context &context;
+        SourceRef srcRef;
         QString name;
     };
 }

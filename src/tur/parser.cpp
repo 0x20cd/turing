@@ -28,20 +28,32 @@ static IdxOrShape_e getIdxOrShape(
             }
 
             if (it->type == Token::RANGE) {
-                if (shape == nullptr)
-                    throw ParseError();
+                if (shape == nullptr) {
+                    throw ParseError{ CommonError{
+                        .srcRef = it->srcRef,
+                        .msg = QObject::tr("Unexpected '..'")
+                    }};
+                }
                 range_it = it;
             }
 
             ++it;
         }
 
-        if (expr_rbound == end)
-            throw ParseError();
+        if (expr_rbound == end) {
+            throw ParseError{ CommonError{
+                .srcRef = expr_lbound->srcRef,
+                .msg = QObject::tr("Bracket has not been closed with ']'")
+            }};
+        }
 
         if (range_it != end) {
-            if (type == IDX)
-                throw ParseError();
+            if (type == IDX) {
+                throw ParseError{ CommonError{
+                    .srcRef = range_it->srcRef,
+                    .msg = QObject::tr("Unexpected '..'")
+                }};
+            }
             type = SHAPE;
 
             index_eval = math::Expression::parse(expr_lbound, range_it);
@@ -54,8 +66,12 @@ static IdxOrShape_e getIdxOrShape(
             shape->push_back(range_eval.eval(ctx));
         }
         else {
-            if (type == SHAPE)
-                throw ParseError();
+            if (type == SHAPE) {
+                throw ParseError{ CommonError{
+                    .srcRef = expr_rbound->srcRef,
+                    .msg = QObject::tr("Expected '..'")
+                }};
+            }
             type = IDX;
 
             index_eval = math::Expression::parse(expr_lbound, expr_rbound);
@@ -75,8 +91,12 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
 {
     auto it = begin;
 
-    if (it == end)
-        throw ParseError();
+    if (it == end) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected iterable reference or 'null'")
+        }};
+    }
 
     if (it->type == Token::KW_NULL) {
         this->refiter_type = KW_NULL;
@@ -92,12 +112,20 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
         it = rbound;
     }
 
-    if (it == end || it->type != Token::ARROW)
-        throw ParseError();
+    if (it == end || it->type != Token::ARROW) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected '->'")
+        }};
+    }
     ++it;
 
-    if (it == end)
-        throw ParseError();
+    if (it == end) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected reference, 'null' or 'same'")
+        }};
+    }
 
     switch (it->type) {
     case Token::KW_NULL:
@@ -119,12 +147,13 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
         it = rbound;
     }}
 
-    if (it == end || it->type != Token::COMMA)
-        throw ParseError();
+    if (it == end || it->type != Token::COMMA) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected ','")
+        }};
+    }
     ++it;
-
-    if (it == end)
-        throw ParseError();
 
     switch (it->type) {
     case Token::KW_N:
@@ -137,16 +166,27 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
         this->dir = Direction::Right;
         break;
     default:
-        throw ParseError();
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected direction")
+        }};
     }
     ++it;
 
-    if (it == end || it->type != Token::COMMA)
-        throw ParseError();
+    if (it == end || it->type != Token::COMMA) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected ','")
+        }};
+    }
     ++it;
 
-    if (it == end)
-        throw ParseError();
+    if (it == end) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected reference, 'start', 'end' or 'same'")
+        }};
+    }
 
     switch (it->type) {
     case Token::KW_START:
@@ -167,8 +207,12 @@ Rule::Rule(QList<Token>::const_iterator begin, QList<Token>::const_iterator end)
         it = end;
     }}
 
-    if (it != end)
-        throw ParseError();
+    if (it != end) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Unexpected token")
+        }};
+    }
 }
 
 
@@ -176,8 +220,12 @@ StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_i
 {
     auto it = begin;
 
-    if (it == end)
-        throw ParseError();
+    if (it == end) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected iterable reference or 'start'")
+        }};
+    }
 
     switch (it->type) {
     case Token::KW_START:
@@ -192,8 +240,12 @@ StateBlock::StateBlock(QList<Token>::const_iterator begin, QList<Token>::const_i
         break;
     }}
 
-    if (it == end || it->type != Token::COLON)
-        throw ParseError();
+    if (it == end || it->type != Token::COLON) {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected ':'")
+        }};
+    }
 
     do {
         ++it;
@@ -212,8 +264,12 @@ Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_itera
     , is_null_declared(false)
     , is_null_requested(false)
 {
-    if (begin == end)
-        throw ParseError();
+    if (begin == end) {
+        throw ParseError{ CommonError{
+            .srcRef = begin->srcRef,
+            .msg = QObject::tr("Expected symbol declaration")
+        }};
+    }
 
     auto it = begin;
     while (this->addNextDeclaration(it, end));
@@ -251,15 +307,21 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
     enum {NONE, KW_NULL, DESC, REF} lval_type = NONE;
 
     if (it->type == Token::KW_NULL) {
-        ++it;
+        if (this->is_null_declared || this->is_null_requested) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Cannot declare 'null' after it has been mentioned before")
+            }};
+        }
 
-        if (this->is_null_declared || this->is_null_requested)
-            throw ParseError();
+        ++it;
 
         this->is_null_declared = true;
         lval_type = KW_NULL;
     }
     else if (it->type == Token::ID) {
+        auto it_name = it;
+
         id::name_t name = it->value.toString();
         ++it;
 
@@ -270,19 +332,32 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             ref.name = name;
         }
         else {
-            if (this->context.has(name))
-                throw ctx::NameOccupiedError();
+            if (this->context.has(name)) {
+                throw ctx::NameOccupiedError{ CommonError{
+                    .srcRef = it_name->srcRef,
+                    .msg = QObject::tr("Name '%1' is already occupied").arg(name)
+                }};
+            }
             this->context.other_names.insert(name);
 
             lval_type = DESC;
             desc.name = name;
         }
     }
-    else throw ParseError();
+    else {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected identifier or 'null'")
+        }};
+    }
 
     if (it == end || it->type == Token::COMMA) {
-        if (lval_type == REF)
-            throw ParseError();
+        if (lval_type == REF) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected '='")
+            }};
+        }
 
         if (lval_type == DESC)
             this->alph.push(desc);
@@ -290,8 +365,12 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
     else if (it->type == Token::ASSIGN) {
         ++it;
 
-        if (it == end)
-            throw ParseError();
+        if (it == end) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected value to assign")
+            }};
+        }
 
         if (lval_type == DESC) {
             auto rval_lbound = it;
@@ -304,11 +383,15 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
 
             if (it->type == Token::STRING) {
                 auto value_s = it->value.toString().toUcs4();
+
+                if (value_s.size() != 1) {
+                    throw ParseError{ CommonError{
+                        .srcRef = it->srcRef,
+                        .msg = QObject::tr("String literal must be of length 1")
+                    }};
+                }
+
                 ++it;
-
-                if (value_s.size() != 1)
-                    throw ParseError();
-
                 value = value_s.front();
             }
             else if (it->type == Token::KW_NULL && lval_type == REF) {
@@ -316,7 +399,12 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
                 value = this->null_value;
                 this->is_null_requested = true;
             }
-            else throw ParseError();
+            else {
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Unexpected token")
+                }};
+            }
 
             if (lval_type == KW_NULL) {
                 this->null_value = value;
@@ -325,11 +413,20 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             }
         }
     }
-    else throw ParseError();
+    else {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Unexpected token")
+        }};
+    }
 
     if (it != end) {
-        if (it->type != Token::COMMA)
-            throw ParseError();
+        if (it->type != Token::COMMA) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Unexpected token")
+            }};
+        }
         ++it;
     }
 
@@ -341,8 +438,12 @@ States::States(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
     : context(context)
     , states(2)
 {
-    if (begin == end)
-        throw ParseError();
+    if (begin == end) {
+        throw ParseError{ CommonError{
+            .srcRef = begin->srcRef,
+            .msg = QObject::tr("Expected state declaration")
+        }};
+    }
 
     auto it = begin;
     while (this->addNextDeclaration(it, end));
@@ -374,31 +475,52 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
             ref.name = name;
         }
         else {
-            if (this->context.has(name))
-                throw ctx::NameOccupiedError();
+            if (this->context.has(name)) {
+                throw ctx::NameOccupiedError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Name '%1' is already occupied").arg(name)
+                }};
+            }
             this->context.other_names.insert(name);
 
             lval_type = DESC;
             desc.name = name;
         }
     }
-    else throw ParseError();
+    else {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Expected identifier, 'start' or 'end'")
+        }};
+    }
 
     if (it == end || it->type == Token::COMMA) {
-        if (lval_type == REF)
-            throw ParseError();
+        if (lval_type == REF) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected '='")
+            }};
+        }
 
         if (lval_type == DESC)
             this->states.push(desc);
     }
     else if (it->type == Token::ASSIGN) {
+        if (lval_type != REF) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Unexpected '='")
+            }};
+        }
+
         ++it;
 
-        if (it == end)
-            throw ParseError();
-
-        if (lval_type != REF)
-            throw ParseError();
+        if (it == end) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected value to assign")
+            }};
+        }
 
         switch (it->type) {
         case Token::KW_START:
@@ -408,15 +530,27 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
             this->states.setAltId(ref, emu::STATE_END);
             break;
         default:
-            throw ParseError();
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Expected 'start' or 'end'")
+            }};
         }
         ++it;
     }
-    else throw ParseError();
+    else {
+        throw ParseError{ CommonError{
+            .srcRef = it->srcRef,
+            .msg = QObject::tr("Unexpected token")
+        }};
+    }
 
     if (it != end) {
-        if (it->type != Token::COMMA)
-            throw ParseError();
+        if (it->type != Token::COMMA) {
+            throw ParseError{ CommonError{
+                .srcRef = it->srcRef,
+                .msg = QObject::tr("Unexpected token")
+            }};
+        }
         ++it;
     }
 
@@ -430,15 +564,29 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
 
     while (it != end) {
         it_period = nextToken(it, end, Token::PERIOD);
-        if (it_period == end) throw ParseError();
+        if (it_period == end) {
+            throw ParseError{ CommonError{
+                .srcRef = end->srcRef,
+                .msg = QObject::tr("Expected '.'")
+            }};
+        }
 
         switch (it->type) {
         case Token::KW_A:
-            if (alph) throw ParseError();
+            if (alph) {
+                throw ParseError{ CommonError{
+                    .srcRef = end->srcRef,
+                    .msg = QObject::tr("Alphabet has already been declared before")
+                }};
+            }
 
             ++it;
-            if (it->type != Token::COLON)
-                throw ParseError();
+            if (it->type != Token::COLON) {
+                throw ParseError{ CommonError{
+                    .srcRef = end->srcRef,
+                    .msg = QObject::tr("Expected ':'")
+                }};
+            }
             ++it;
 
             this->alph = std::make_shared<Alphabet>(it, it_period, this->context);
@@ -446,11 +594,20 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
             break;
 
         case Token::KW_Q:
-            if (states) throw ParseError();
+            if (states) {
+                throw ParseError{ CommonError{
+                    .srcRef = end->srcRef,
+                    .msg = QObject::tr("States have already been declared before")
+                }};
+            }
 
             ++it;
-            if (it->type != Token::COLON)
-                throw ParseError();
+            if (it->type != Token::COLON) {
+                throw ParseError{ CommonError{
+                    .srcRef = end->srcRef,
+                    .msg = QObject::tr("Expected ':'")
+                }};
+            }
             ++it;
 
             this->states = std::make_shared<States>(it, it_period, this->context);

@@ -13,12 +13,10 @@ namespace tur {
         static QList<Token> tokenize(QString source);
     private:
         static QString nextName(QStringView tail, QString::const_iterator &it);
-        static Token nextLiteral(QStringView tail, QString::const_iterator &it);
+        static Token nextLiteral(QStringView tail, QString::const_iterator &it, SourceRef srcRef);
     };
 
-    struct TokenizerError {
-        SourceRef srcRef;
-    };
+    struct TokenizerError : CommonError {};
 }
 
 #endif // TUR_TOKENIZER_HPP
