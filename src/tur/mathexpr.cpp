@@ -7,8 +7,20 @@ using namespace tur::math;
 using boost::safe_numerics::safe;
 
 
-Number::Number(number_t value)
-    : value(value)
+IEvaluable::IEvaluable(SourceRef srcRef)
+    : srcRef(srcRef)
+{}
+
+
+SourceRef IEvaluable::getSrcRef() const
+{
+    return this->srcRef;
+}
+
+
+Number::Number(SourceRef srcRef, number_t value)
+    : IEvaluable{srcRef}
+    , value(value)
 {}
 
 
@@ -24,8 +36,9 @@ number_t Number::eval(const ctx::Context*)
 }
 
 
-Variable::Variable(const QString &name, bool is_neg)
-    : name(name)
+Variable::Variable(SourceRef srcRef, const QString &name, bool is_neg)
+    : IEvaluable{srcRef}
+    , name(name)
     , is_neg(is_neg)
 {}
 
@@ -39,19 +52,26 @@ void Variable::inv_sign()
 number_t Variable::eval(const ctx::Context *ctx)
 {
     if (!ctx || !ctx->vars.contains(this->name))
-        throw EvalError();
+        throw EvalError{CommonError{
+            .srcRef = this->srcRef,
+            .msg = QObject::tr("Variable '%1' does not exist").arg(this->name)
+        }};
 
     try {
         safe<number_t> val = ctx->vars.value(this->name);
         return is_neg ? (-val) : val;
     } catch (const std::exception&) {
-        throw EvalError();
+        throw EvalError{CommonError{
+            .srcRef = this->srcRef,
+            .msg = QObject::tr("Integer overflow")
+        }};
     }
 }
 
 
 Expression::Expression(std::unique_ptr<IEvaluable> &&lhs, std::unique_ptr<IEvaluable> &&rhs, operator_t op, bool is_neg)
-    : lhs(std::move(lhs))
+    : IEvaluable{lhs->getSrcRef()}
+    , lhs(std::move(lhs))
     , rhs(std::move(rhs))
     , op_fn(op)
     , is_neg(is_neg)
@@ -67,10 +87,13 @@ void Expression::inv_sign()
 number_t Expression::eval(const ctx::Context *vars)
 {
     try {
-        safe<number_t> op_res = this->op_fn(this->lhs->eval(vars), this->rhs->eval(vars));
+        safe<number_t> op_res = this->op_fn(this->lhs->eval(vars), this->rhs->eval(vars), this->rhs->getSrcRef());
         return this->is_neg ? (-op_res) : op_res;
     } catch (const std::exception&) {
-        throw EvalError();
+        throw EvalError{CommonError{
+            .srcRef = this->srcRef,
+            .msg = QObject::tr("Integer overflow")
+        }};
     }
 }
 
@@ -144,8 +167,9 @@ std::unique_ptr<IEvaluable> Expression::next_val_mul(QList<Token>::const_iterato
     std::vector<bool> signs;
     std::vector<std::unique_ptr<IEvaluable>> values;
 
+    auto it_begin = it;
     bool is_neg = next_unary(it, end);
-    std::unique_ptr<IEvaluable> val = next_val(it, end);
+    std::unique_ptr<IEvaluable> val = next_val(it, end, it_begin->srcRef);
 
     while (it != end)
     {
@@ -156,8 +180,9 @@ std::unique_ptr<IEvaluable> Expression::next_val_mul(QList<Token>::const_iterato
         signs.push_back(is_neg);
         values.push_back(std::move(val));
 
+        it_begin = it;
         is_neg = next_unary(it, end);
-        val = next_val(it, end);
+        val = next_val(it, end, it_begin->srcRef);
     }
 
     while (!values.empty()) {
@@ -174,7 +199,7 @@ std::unique_ptr<IEvaluable> Expression::next_val_mul(QList<Token>::const_iterato
     return val;
 }
 
-std::unique_ptr<IEvaluable> Expression::next_val(QList<Token>::const_iterator &it, QList<Token>::const_iterator end)
+std::unique_ptr<IEvaluable> Expression::next_val(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, SourceRef srcRef)
 {
     std::unique_ptr<IEvaluable> res = nullptr;
     bool is_neg;
@@ -207,11 +232,11 @@ std::unique_ptr<IEvaluable> Expression::next_val(QList<Token>::const_iterator &i
         ++it;
         break;
     case Token::NUMBER:
-        res = std::unique_ptr<IEvaluable>(new Number(it->value.toLongLong()));
+        res = std::unique_ptr<IEvaluable>(new Number(srcRef, it->value.toLongLong()));
         ++it;
         break;
     case Token::ID:
-        res = std::unique_ptr<IEvaluable>(new Variable(it->value.toString()));
+        res = std::unique_ptr<IEvaluable>(new Variable(srcRef, it->value.toString()));
         ++it;
         break;
     default:
@@ -246,9 +271,14 @@ bool Expression::next_unary(QList<Token>::const_iterator &it, QList<Token>::cons
 }
 
 
-number_t Expression::pow(safe<number_t> a, safe<number_t> b)
+number_t Expression::pow(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
-    if (b < 0) throw EvalError();
+    if (b < 0) {
+        throw EvalError{ CommonError {
+            .srcRef = srcRef,
+            .msg = QObject::tr("Negative exponent")
+        }};
+    }
 
     if (b == 1) return a;
     if (b == 0 || a == 1) return 1;
@@ -271,27 +301,41 @@ number_t Expression::pow(safe<number_t> a, safe<number_t> b)
     return res;
 }
 
-number_t Expression::mul(safe<number_t> a, safe<number_t> b)
+number_t Expression::mul(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
     return a * b;
 }
 
-number_t Expression::div(safe<number_t> a, safe<number_t> b)
+number_t Expression::div(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
+    if (b == 0) {
+        throw EvalError{ CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Zero division")
+        }};
+    }
+
     return a / b;
 }
 
-number_t Expression::mod(safe<number_t> a, safe<number_t> b)
+number_t Expression::mod(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
+    if (b == 0) {
+        throw EvalError{ CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Zero division")
+        }};
+    }
+
     return a % b;
 }
 
-number_t Expression::add(safe<number_t> a, safe<number_t> b)
+number_t Expression::add(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
     return a + b;
 }
 
-number_t Expression::sub(safe<number_t> a, safe<number_t> b)
+number_t Expression::sub(safe<number_t> a, safe<number_t> b, SourceRef srcRef)
 {
     return a - b;
 }

@@ -115,10 +115,13 @@ namespace tur::id
         void setName(name_t name);
         void setIdxEval(idxeval_t &&idxeval);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
+
+        SourceRef getSrcRef() const;
         IdRef eval(const ctx::Context *vars = nullptr) const;
     private:
         name_t name;
         idxeval_t idxeval;
+        SourceRef srcRef;
     };
 
 
@@ -211,11 +214,13 @@ namespace tur::id
         void setIdx(_idx_t &&idx);
         void parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
 
+        SourceRef getSrcRef() const;
         name_t getName() const;
         IdRefIter eval(ctx::Context &ctx, const shape_t &shape) const;
     private:
         name_t name;
         _idx_t idx;
+        SourceRef srcRef;
     };
 
 
@@ -224,12 +229,12 @@ namespace tur::id
     public:
         IdSpace(id_t start);
 
-        void push(const IdDesc &desc);
-        void setAltId(const IdRef &ref, id_t altId);
+        void push(const IdDesc &desc, SourceRef srcRef);
+        void setAltId(const IdRef &ref, id_t altId, SourceRef srcRef);
 
-        id_t getId(const IdRef &ref) const;
+        id_t getId(const IdRef &ref, SourceRef srcRef) const;
         IdRef getRef(id_t id) const;
-        IdDesc getDesc(name_t name) const;
+        IdDesc getDesc(name_t name, SourceRef srcRef) const;
 
         bool contains(name_t name) const;
         bool isAlt(id_t id) const;
@@ -285,9 +290,9 @@ namespace tur::id
     {
     public:
         SymSpace() = default;
-        void insert(SymDesc &&desc);
-        sym_t getSym(const IdRef &ref) const;
-        const SymDesc& getDesc(name_t name) const;
+        void insert(SymDesc &&desc, SourceRef srcRef);
+        sym_t getSym(const IdRef &ref, SourceRef srcRef) const;
+        const SymDesc& getDesc(name_t name, SourceRef srcRef) const;
         bool contains(name_t name) const;
     private:
         std::unordered_map<name_t, SymDesc> m_nameToDesc;

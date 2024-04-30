@@ -234,7 +234,13 @@ void IdRefEval::parse(QList<Token>::const_iterator begin, QList<Token>::const_it
     }
 
     this->name = name;
+    this->srcRef = begin->srcRef;
     this->idxeval = std::move(idxeval);
+}
+
+SourceRef IdRefEval::getSrcRef() const
+{
+    return this->srcRef;
 }
 
 IdRef IdRefEval::eval(const ctx::Context *vars) const
@@ -594,7 +600,13 @@ void IdRefIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     }
 
     this->name = name;
+    this->srcRef = begin->srcRef;
     this->idx = std::move(idxeval);
+}
+
+SourceRef IdRefIterEval::getSrcRef() const
+{
+    return this->srcRef;
 }
 
 name_t IdRefIterEval::getName() const
@@ -628,10 +640,10 @@ IdSpace::IdSpace(id_t start)
     , m_stop(start)
 {}
 
-void IdSpace::push(const IdDesc &desc)
+void IdSpace::push(const IdDesc &desc, SourceRef srcRef)
 {
     if (this->m_nameToId.contains(desc.name))
-        throw IdInitError{};
+        throw std::logic_error("name uniqueness must be checked beforehand");
 
     id_t id = this->m_stop;
     safe<id_t> stop = id;
@@ -642,7 +654,10 @@ void IdSpace::push(const IdDesc &desc)
             len *= range.size();
         stop += len;
     } catch (const std::exception&) {
-        throw IdInitError{};
+        throw IdInitError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Size of '%1' is too big").arg(desc.name)
+        }};
     }
 
     this->m_nameToId.insert(desc.name, id);
@@ -650,26 +665,37 @@ void IdSpace::push(const IdDesc &desc)
     this->m_stop = stop;
 }
 
-void IdSpace::setAltId(const IdRef &ref, id_t altId)
+void IdSpace::setAltId(const IdRef &ref, id_t altId, SourceRef srcRef)
 {
     if (!this->isAlt(altId))
         throw std::logic_error("Alternative id must not intersect the id space");
 
     id_t id;
     if (!this->get_id_raw(ref, id))
-        throw IdInitError{};
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Invalid reference")
+        }};
 
-    if (this->m_altId.contains(id))
-        throw IdInitError{};
+    if (this->m_altId.contains(id)) {
+        throw IdInitError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Cannot re-assign value")
+        }};
+    }
 
     this->m_altId.insert(id, altId);
 }
 
-id_t IdSpace::getId(const IdRef &ref) const
+id_t IdSpace::getId(const IdRef &ref, SourceRef srcRef) const
 {
     id_t id;
-    if (!this->get_id_raw(ref, id))
-        throw IdAccessError{};
+    if (!this->get_id_raw(ref, id)) {
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Invalid reference")
+        }};
+    }
 
     if (!this->m_altId.contains(id))
         return id;
@@ -698,10 +724,13 @@ IdRef IdSpace::getRef(id_t id) const
     return ref;
 }
 
-IdDesc IdSpace::getDesc(name_t name) const
+IdDesc IdSpace::getDesc(name_t name, SourceRef srcRef) const
 {
     if (!this->m_nameToId.contains(name))
-        throw IdAccessError();
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Identifier '%1' does not exist in this context").arg(name)
+        }};
 
     auto id = this->m_nameToId.value(name);
     return this->m_idToDesc.at(id);
@@ -889,10 +918,10 @@ sym_t StringCat::operator[](uint64_t i) const
 //////////////////////////////////////////////////
 
 
-void SymSpace::insert(SymDesc &&desc)
+void SymSpace::insert(SymDesc &&desc, SourceRef srcRef)
 {
     if (this->m_nameToDesc.contains(desc.name))
-        throw IdInitError{};
+        throw std::logic_error("name uniqueness must be checked beforehand");
 
     safe<quint64> len = 1;
 
@@ -900,33 +929,51 @@ void SymSpace::insert(SymDesc &&desc)
         for (const idxrange_t &range : desc.shape)
             len *= range.size();
     } catch (const std::exception&) {
-        throw IdInitError{};
+        throw IdInitError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Size of '%1' is too big").arg(desc.name)
+        }};
     }
 
     if (desc.value.size() != len)
-        throw IdInitError{};
+        throw IdInitError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Value size doesn't match size of '%1'").arg(desc.name)
+        }};
 
     this->m_nameToDesc[desc.name] = std::move(desc);
 }
 
-sym_t SymSpace::getSym(const IdRef &ref) const
+sym_t SymSpace::getSym(const IdRef &ref, SourceRef srcRef) const
 {
-    if (!this->m_nameToDesc.contains(ref.name))
-        throw IdAccessError{};
+    if (!this->m_nameToDesc.contains(ref.name)) {
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Identifier '%1' does not exist in this context").arg(ref.name)
+        }};
+    }
 
     const SymDesc &desc = this->m_nameToDesc.at(ref.name);
 
     uint64_t pos;
-    if (!idxToPos(ref.idx, desc.shape, pos))
-        throw IdAccessError{};
+    if (!idxToPos(ref.idx, desc.shape, pos)) {
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Invalid reference")
+        }};
+    }
 
     return desc.value[pos];
 }
 
-const SymDesc& SymSpace::getDesc(name_t name) const
+const SymDesc& SymSpace::getDesc(name_t name, SourceRef srcRef) const
 {
-    if (!this->m_nameToDesc.contains(name))
-        throw IdAccessError();
+    if (!this->m_nameToDesc.contains(name)) {
+        throw IdAccessError{CommonError{
+            .srcRef = srcRef,
+            .msg = QObject::tr("Identifier '%1' does not exist in this context").arg(name)
+        }};
+    }
 
     return this->m_nameToDesc.at(name);
 }

@@ -28,8 +28,8 @@ namespace tur::parser
     struct Alphabet {
         Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_iterator end, ctx::Context &context);
 
-        tur::id::IdDesc getIdDesc(tur::id::name_t name) const;
-        tur::id::id_t getId(const tur::id::IdRef &ref) const;
+        tur::id::IdDesc getIdDesc(tur::id::name_t name, SourceRef srcRef) const;
+        tur::id::id_t getId(const tur::id::IdRef &ref, SourceRef srcRef) const;
 
         tur::id::IdSpace alph;
         tur::id::SymSpace alph_sym;

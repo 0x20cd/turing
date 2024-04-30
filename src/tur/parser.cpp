@@ -276,22 +276,22 @@ Alphabet::Alphabet(QList<Token>::const_iterator begin, QList<Token>::const_itera
 }
 
 
-id::IdDesc Alphabet::getIdDesc(id::name_t name) const
+id::IdDesc Alphabet::getIdDesc(id::name_t name, SourceRef srcRef) const
 {
     if (this->alph_sym.contains(name)) {
-        return this->alph_sym.getDesc(name);
+        return this->alph_sym.getDesc(name, srcRef);
     } else {
-        return this->alph.getDesc(name);
+        return this->alph.getDesc(name, srcRef);
     }
 }
 
 
-id::id_t Alphabet::getId(const id::IdRef &ref) const
+id::id_t Alphabet::getId(const id::IdRef &ref, SourceRef srcRef) const
 {
     if (this->alph_sym.contains(ref.name)) {
-        return (id::id_t)this->alph_sym.getSym(ref);
+        return (id::id_t)this->alph_sym.getSym(ref, srcRef);
     } else {
-        return this->alph.getId(ref);
+        return this->alph.getId(ref, srcRef);
     }
 }
 
@@ -305,6 +305,8 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
     id::SymDesc desc;
 
     enum {NONE, KW_NULL, DESC, REF} lval_type = NONE;
+
+    auto it_lvalue = it;
 
     if (it->type == Token::KW_NULL) {
         if (this->is_null_declared || this->is_null_requested) {
@@ -320,8 +322,6 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         lval_type = KW_NULL;
     }
     else if (it->type == Token::ID) {
-        auto it_name = it;
-
         id::name_t name = it->value.toString();
         ++it;
 
@@ -334,7 +334,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         else {
             if (this->context.has(name)) {
                 throw ctx::NameOccupiedError{ CommonError{
-                    .srcRef = it_name->srcRef,
+                    .srcRef = it_lvalue->srcRef,
                     .msg = QObject::tr("Name '%1' is already occupied").arg(name)
                 }};
             }
@@ -360,7 +360,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
         }
 
         if (lval_type == DESC)
-            this->alph.push(desc);
+            this->alph.push(desc, it_lvalue->srcRef);
     }
     else if (it->type == Token::ASSIGN) {
         ++it;
@@ -377,7 +377,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             auto rval_rbound = it = nextToken(it, end, Token::COMMA);
             desc.value.parse(rval_lbound, rval_rbound);
 
-            this->alph_sym.insert(std::move(desc));
+            this->alph_sym.insert(std::move(desc), it_lvalue->srcRef);
         } else {
             id_t value;
 
@@ -409,7 +409,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
             if (lval_type == KW_NULL) {
                 this->null_value = value;
             } else {
-                this->alph.setAltId(ref, value);
+                this->alph.setAltId(ref, value, it_lvalue->srcRef);
             }
         }
     }
@@ -460,6 +460,8 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
 
     enum {NONE, KW, DESC, REF} lval_type = NONE;
 
+    auto it_lvalue = it;
+
     if (it->type == Token::KW_START || it->type == Token::KW_END) {
         ++it;
         lval_type = KW;
@@ -477,7 +479,7 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
         else {
             if (this->context.has(name)) {
                 throw ctx::NameOccupiedError{ CommonError{
-                    .srcRef = it->srcRef,
+                    .srcRef = it_lvalue->srcRef,
                     .msg = QObject::tr("Name '%1' is already occupied").arg(name)
                 }};
             }
@@ -503,7 +505,7 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
         }
 
         if (lval_type == DESC)
-            this->states.push(desc);
+            this->states.push(desc, it_lvalue->srcRef);
     }
     else if (it->type == Token::ASSIGN) {
         if (lval_type != REF) {
@@ -524,10 +526,10 @@ bool States::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>::
 
         switch (it->type) {
         case Token::KW_START:
-            this->states.setAltId(ref, emu::STATE_START);
+            this->states.setAltId(ref, emu::STATE_START, it_lvalue->srcRef);
             break;
         case Token::KW_END:
-            this->states.setAltId(ref, emu::STATE_END);
+            this->states.setAltId(ref, emu::STATE_END, it_lvalue->srcRef);
             break;
         default:
             throw ParseError{ CommonError{

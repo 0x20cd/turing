@@ -22,16 +22,21 @@ namespace tur::math
     class IEvaluable
     {
     public:
+        IEvaluable(SourceRef srcRef);
+        SourceRef getSrcRef() const;
+
         virtual number_t eval(const ctx::Context *vars = nullptr) = 0;
         virtual void inv_sign() = 0;
         virtual ~IEvaluable() = default;
+    protected:
+        SourceRef srcRef;
     };
 
 
     class Number : public IEvaluable
     {
     public:
-        Number(number_t value);
+        Number(SourceRef srcRef, number_t value);
         number_t eval(const ctx::Context* = nullptr) override;
         void inv_sign() override;
     private:
@@ -42,7 +47,7 @@ namespace tur::math
     class Variable : public IEvaluable
     {
     public:
-        Variable(const QString &name, bool is_neg = false);
+        Variable(SourceRef srcRef, const QString &name, bool is_neg = false);
         number_t eval(const ctx::Context *vars = nullptr) override;
         void inv_sign() override;
     private:
@@ -53,7 +58,10 @@ namespace tur::math
 
     class Expression : public IEvaluable
     {
-        typedef number_t (*operator_t)(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
+        typedef number_t (*operator_t)(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
     public:
         Expression(std::unique_ptr<IEvaluable> &&lhs, std::unique_ptr<IEvaluable> &&rhs, operator_t op, bool is_neg = false);
         number_t eval(const ctx::Context *vars = nullptr) override;
@@ -61,12 +69,30 @@ namespace tur::math
 
         static std::unique_ptr<IEvaluable> parse(QList<Token>::const_iterator begin, QList<Token>::const_iterator end);
 
-        static number_t pow(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
-        static number_t mul(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
-        static number_t div(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
-        static number_t mod(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
-        static number_t add(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
-        static number_t sub(boost::safe_numerics::safe<number_t> a, boost::safe_numerics::safe<number_t> b);
+        static number_t pow(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
+        static number_t mul(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
+        static number_t div(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
+        static number_t mod(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
+        static number_t add(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
+        static number_t sub(
+            boost::safe_numerics::safe<number_t> a,
+            boost::safe_numerics::safe<number_t> b,
+            SourceRef srcRef);
 
     private:
         std::unique_ptr<IEvaluable> lhs, rhs;
@@ -75,7 +101,7 @@ namespace tur::math
 
         static std::unique_ptr<IEvaluable> next_val_add(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
         static std::unique_ptr<IEvaluable> next_val_mul(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
-        static std::unique_ptr<IEvaluable> next_val(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
+        static std::unique_ptr<IEvaluable> next_val(QList<Token>::const_iterator &it, QList<Token>::const_iterator end, SourceRef srcRef);
         static bool next_unary(QList<Token>::const_iterator &it, QList<Token>::const_iterator end);
     };
 

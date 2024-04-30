@@ -32,12 +32,12 @@ void Loader::loadTable(QString source, bool preserveTape)
 
             state_iter = block.refiter.eval(
                 parser.context,
-                parser.states->states.getDesc(state_ref.name).shape
+                parser.states->states.getDesc(state_ref.name, block.refiter.getSrcRef()).shape
             );
 
             state_iter.value(state_ref.idx);
 
-            state_id = parser.states->states.getId(state_ref);
+            state_id = parser.states->states.getId(state_ref, block.refiter.getSrcRef());
             break;
 
         case parser::KW_START:
@@ -64,12 +64,12 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     sym_iter = rule.refiter.eval(
                         parser.context,
-                        parser.alph->getIdDesc(sym_ref.name).shape
+                        parser.alph->getIdDesc(sym_ref.name, rule.refiter.getSrcRef()).shape
                     );
 
                     sym_iter.value(sym_ref.idx);
 
-                    sym_id = parser.alph->getId(sym_ref);
+                    sym_id = parser.alph->getId(sym_ref, rule.refiter.getSrcRef());
                     break;
 
                 case parser::KW_NULL:
@@ -90,7 +90,7 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     switch (rule.symbol_type) {
                     case parser::REF:
-                        tr.symbol = parser.alph->getId(rule.symbol.eval(&parser.context));
+                        tr.symbol = parser.alph->getId(rule.symbol.eval(&parser.context), rule.symbol.getSrcRef());
                         break;
                     case parser::KW_SAME:
                         tr.symbol = sym_id;
@@ -104,7 +104,7 @@ void Loader::loadTable(QString source, bool preserveTape)
 
                     switch (rule.state_type) {
                     case parser::REF:
-                        tr.state = parser.states->states.getId(rule.state.eval(&parser.context));
+                        tr.state = parser.states->states.getId(rule.state.eval(&parser.context), rule.state.getSrcRef());
                         break;
                     case parser::KW_SAME:
                         tr.state = state_id;
@@ -123,13 +123,13 @@ void Loader::loadTable(QString source, bool preserveTape)
                 } while (
                     sym_iter.next()
                     && sym_iter.value(sym_ref.idx)
-                    && (sym_id = parser.alph->getId(sym_ref), true)
+                    && (sym_id = parser.alph->getId(sym_ref, rule.refiter.getSrcRef()), true)
                 );
             }
         } while (
             state_iter.next()
             && state_iter.value(state_ref.idx)
-            && (state_id = parser.states->states.getId(state_ref), true)
+            && (state_id = parser.states->states.getId(state_ref, block.refiter.getSrcRef()), true)
         );
     }
 
