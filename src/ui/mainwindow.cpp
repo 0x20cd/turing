@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     , status(READY)
     , is_table_uptodate(false)
     , is_changes_unsaved(false)
+    , sc_save(nullptr)
 {
     ui->setupUi(this);
 
@@ -41,9 +42,30 @@ MainWindow::MainWindow(QWidget *parent)
 
     QObject::connect(&stepTimer, &QTimer::timeout, this, &MainWindow::makeStep);
     QObject::connect(ui->buttonStep, &QPushButton::clicked, this, &MainWindow::makeStep);
+
+    QObject::connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onNewFile);
+    QObject::connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenProgram);
+    QObject::connect(ui->actionSave, &QAction::triggered, [this](){ this->onSaveProgram(); });
+    QObject::connect(ui->actionSaveAs, &QAction::triggered, [this](){ this->onSaveProgram(true); });
     QObject::connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
+
     QObject::connect(ui->textEdit, &QPlainTextEdit::cursorPositionChanged, this, &MainWindow::updateLabelStatus);
     QObject::connect(ui->textEdit, &QPlainTextEdit::textChanged, this, &MainWindow::onTextChanged);
+
+    this->sc_new = new QShortcut(QKeySequence("Ctrl+N"), ui->textEdit);
+    QObject::connect(sc_new, &QShortcut::activated, this, &MainWindow::onNewFile);
+
+    this->sc_open = new QShortcut(QKeySequence("Ctrl+O"), ui->textEdit);
+    QObject::connect(sc_open, &QShortcut::activated, this, &MainWindow::onOpenProgram);
+
+    this->sc_save = new QShortcut(QKeySequence("Ctrl+S"), ui->textEdit);
+    QObject::connect(sc_save, &QShortcut::activated, [this](){ this->onSaveProgram(); });
+
+    this->sc_save_as = new QShortcut(QKeySequence("Ctrl+Shift+S"), ui->textEdit);
+    QObject::connect(sc_save_as, &QShortcut::activated, [this](){ this->onSaveProgram(true); });
+
+    this->sc_quit = new QShortcut(QKeySequence("Ctrl+Q"), this);
+    QObject::connect(sc_quit, &QShortcut::activated, this, &MainWindow::close);
 }
 
 MainWindow::~MainWindow()
@@ -320,7 +342,7 @@ void MainWindow::on_buttonReset_clicked()
 }
 
 
-void MainWindow::on_actionOpen_triggered()
+void MainWindow::onOpenProgram()
 {
     QString filename = QFileDialog::getOpenFileName(this);
     if (filename.isNull())
@@ -378,19 +400,7 @@ void MainWindow::on_speedSlider_valueChanged(int value)
 }
 
 
-void MainWindow::on_actionSave_triggered()
-{
-    onSaveProgram();
-}
-
-
-void MainWindow::on_actionSave_as_triggered()
-{
-    onSaveProgram(true);
-}
-
-
-void MainWindow::on_actionNew_triggered()
+void MainWindow::onNewFile()
 {
     if (!saveBefore())
         return;

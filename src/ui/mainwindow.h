@@ -7,6 +7,7 @@
 #include <QIcon>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QShortcut>
 #include "tur/emulator.hpp"
 #include "tur/loader.hpp"
 #include "tur/utils.hpp"
@@ -28,7 +29,6 @@ public:
 private slots:
     void on_buttonPlayPause_clicked();
     void on_buttonReset_clicked();
-    void on_actionOpen_triggered();
     void on_actionLoadTape_triggered();
     void on_actionSaveTape_triggered();
     void on_speedSlider_valueChanged(int value);
@@ -40,19 +40,13 @@ private slots:
     void makeStep();
     void setStatus(Status status);
     bool loadProgram();
+    void onNewFile();
+    void onOpenProgram();
     bool onSaveProgram(bool is_save_as = false);
     bool saveBefore();
     void onTextChanged();
 
     void closeEvent(QCloseEvent *event) override;
-
-
-
-    void on_actionSave_triggered();
-
-    void on_actionSave_as_triggered();
-
-    void on_actionNew_triggered();
 
 private:
     static const int T_NORMAL_MS, T_MIN_MS, T_MAX_MS;
@@ -68,6 +62,7 @@ private:
     QString loadedTape, filename;
     Status status;
     bool is_table_uptodate, is_changes_unsaved;
+    QShortcut *sc_new, *sc_open, *sc_save, *sc_save_as, *sc_quit;
 };
 
 #endif // MAINWINDOW_H
