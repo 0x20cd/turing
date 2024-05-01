@@ -22,6 +22,7 @@ Cell::Cell(QWidget *parent)
     this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     this->setMinimumSize(CELL_SIZE, CELL_SIZE);
     this->setMaximumSize(CELL_SIZE, CELL_SIZE);
+    this->setFocusPolicy(Qt::NoFocus);
     this->updateStyle();
 }
 
