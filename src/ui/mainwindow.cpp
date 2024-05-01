@@ -60,6 +60,10 @@ void MainWindow::updateCellCount()
 
     while (count < newCount) {
         auto *cell = new Cell(this);
+        QObject::connect(cell, &QPushButton::clicked, [this, cell](){
+            this->emu.moveCarriage(cell->diff);
+            this->updateCellValues();
+        });
         ui->tape->addWidget(cell);
         ++count;
     }
@@ -77,7 +81,7 @@ void MainWindow::updateCellCount()
 void MainWindow::updateCellValues()
 {
     auto &tape = emu.tape();
-    int index;
+    int index, diff;
     int cellsCount = ui->tape->count();
     int carCellIndex = cellsCount / 2;
 
@@ -91,19 +95,24 @@ void MainWindow::updateCellValues()
 
     auto car = emu.carriage(), it = car;
 
-    for (it = car, index = carCellIndex; ++it != tape.end() && ++index < cellsCount; ) {
+    for (it = car, index = carCellIndex, diff = 0; ++it != tape.end() && ++index < cellsCount; ) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
         cell->setValue(*it, this->emu.alph());
     }
 
     dynamic_cast<Cell*>(ui->tape->itemAt(carCellIndex)->widget())->setSelected(true);
 
-    for (it = car, index = carCellIndex; index >= 0; --it, --index) {
+    for (it = car, index = carCellIndex, diff = 0; index >= 0; --it, --index) {
         auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
         cell->setValue(*it, this->emu.alph());
 
         if (it == tape.begin())
             break;
+    }
+
+    for (index = 0, diff = -carCellIndex; index < cellsCount; ++index, ++diff){
+        auto *cell = dynamic_cast<Cell*>(ui->tape->itemAt(index)->widget());
+        cell->diff = diff;
     }
 }
 

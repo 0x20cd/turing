@@ -15,6 +15,7 @@ const QLatin1StringView Cell::CSS{
 
 Cell::Cell(QWidget *parent)
     : QPushButton(parent)
+    , diff(0)
     , is_selected(false)
     , is_named(false)
 {

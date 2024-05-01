@@ -55,6 +55,8 @@ namespace tur {
         void step();
         void reset();
         bool addRule(const emu::Condition &cond, const emu::Transition &tr);
+        void moveCarriage(int diff);
+        void moveCarriage(Direction dir, unsigned steps = 1);
 
         quint32 symnull() const;
         quint32 state() const;

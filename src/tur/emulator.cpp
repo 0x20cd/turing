@@ -63,6 +63,43 @@ bool Emulator::addRule(const Condition &cond, const Transition &tr)
 }
 
 
+void Emulator::moveCarriage(int diff)
+{
+    if (diff < 0)
+        this->moveCarriage(Direction::Left, -diff);
+    else
+        this->moveCarriage(Direction::Right, diff);
+}
+
+
+void Emulator::moveCarriage(Direction dir, unsigned steps)
+{
+    switch (dir) {
+    case Left:
+        while (steps) {
+            if (m_tape.car == m_tape.tape.begin())
+                m_tape.tape.push_front(m_alph ? m_alph->null_value : 0);
+            m_tape.car--;
+            steps--;
+        }
+        break;
+    case Right:
+        while (steps) {
+            if (m_tape.car == --m_tape.tape.end())
+                m_tape.tape.push_back(m_alph ? m_alph->null_value : 0);
+            m_tape.car++;
+            steps--;
+        }
+        break;
+    case None:
+        break;
+    default:
+        std::logic_error("Invalid direction");
+        break;
+    }
+}
+
+
 void Emulator::step()
 {
     if (m_state == STATE_END)
@@ -86,23 +123,7 @@ void Emulator::step()
     *m_tape.car = tr.symbol;
     m_state = tr.state;
 
-    switch (tr.direction) {
-    case Left:
-        if (m_tape.car == m_tape.tape.begin())
-            m_tape.tape.push_front(m_alph->null_value);
-        m_tape.car--;
-        break;
-    case Right:
-        if (m_tape.car == --m_tape.tape.end())
-            m_tape.tape.push_back(m_alph->null_value);
-        m_tape.car++;
-        break;
-    case None:
-        break;
-    default:
-        std::logic_error("Invalid direction");
-        break;
-    }
+    this->moveCarriage(tr.direction);
 }
 
 
