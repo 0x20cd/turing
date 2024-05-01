@@ -184,25 +184,32 @@ namespace tur::id
     };
 
 
+    class IdRefIterEval;
+
     class IdRefIter {
     public:
-        using _index_t = std::variant<index_t, IndexIter>;
+        using _index_t = std::optional<IndexIter>;
         using _idx_t = std::vector<_index_t>;
 
         IdRefIter();
-        IdRefIter(name_t name, _idx_t &&idx);
+        IdRefIter(name_t name, ctx::Context *ctx, const IdRefIterEval *parent, const shape_t &shape);
 
         IdRefIter& operator=(IdRefIter&&) = default;
         bool next();
 
         bool value(idx_t &idx_out) const;
+
     private:
         name_t name;
+        ctx::Context *ctx;
+        const IdRefIterEval *parent;
+        shape_t shape;
         _idx_t idx;
         bool is_end;
     };
 
     class IdRefIterEval {
+        friend class IdRefIter;
     public:
         using _index_t = std::variant<indexeval_t, IndexIterEval>;
         using _idx_t = std::vector<_index_t>;

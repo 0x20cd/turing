@@ -473,11 +473,24 @@ IdRefIter::IdRefIter()
     : is_end(true)
 {}
 
-IdRefIter::IdRefIter(name_t name, _idx_t &&idx)
+IdRefIter::IdRefIter(name_t name, ctx::Context *ctx, const IdRefIterEval *parent, const shape_t &shape)
     : name(name)
-    , idx(std::move(idx))
+    , ctx(ctx)
+    , parent(parent)
+    , shape(shape)
     , is_end(false)
-{}
+{
+    for (qsizetype i = 0; i < this->parent->idx.size(); ++i) {
+        const auto &r = this->parent->idx[i];
+
+        if (std::holds_alternative<indexeval_t>(r)) {
+            this->idx.push_back(_index_t{});
+            continue;
+        }
+
+        this->idx.push_back(std::get<IndexIterEval>(r).eval(*ctx, this->shape[i]));
+    }
+}
 
 bool IdRefIter::value(idx_t &idx_out) const
 {
@@ -485,12 +498,15 @@ bool IdRefIter::value(idx_t &idx_out) const
         return false;
 
     idx_t idx;
-    for (auto it = this->idx.begin(); it != this->idx.end(); ++it) {
+    for (qsizetype i = 0; i < this->parent->idx.size(); ++i) {
         index_t index;
-        if (std::holds_alternative<index_t>(*it)) {
-            index = std::get<index_t>(*it);
+
+        auto &curr = this->idx[i];
+
+        if (curr) {
+            index = curr->value();
         } else {
-            index = std::get<IndexIter>(*it).value();
+            index = std::get<indexeval_t>(this->parent->idx[i])->eval(this->ctx);
         }
 
         idx.push_back(index);
@@ -505,21 +521,28 @@ bool IdRefIter::next()
     if (this->is_end)
         return false;
 
-    auto it_rev = this->idx.rbegin();
-    for (; it_rev != this->idx.rend(); ++it_rev) {
-        if (std::holds_alternative<index_t>(*it_rev))
+    qsizetype i = this->idx.size();
+    while (--i >= 0) {
+        auto &curr = this->idx[i];
+        if (!curr)
             continue;
 
-        auto &iter = std::get<IndexIter>(*it_rev);
-        if (iter.next())
+        if (curr->next())
             break;
-
-        iter.reset();
     }
 
-    if (it_rev == this->idx.rend()) {
+    if (i < 0) {
         this->is_end = true;
         return false;
+    }
+
+    while (++i < this->idx.size()) {
+        auto &curr = this->idx[i];
+        if (!curr)
+            continue;
+
+        curr.reset();
+        curr.emplace(std::get<IndexIterEval>(this->parent->idx[i]).eval(*ctx, this->shape[i]));
     }
 
     return true;
@@ -616,19 +639,7 @@ name_t IdRefIterEval::getName() const
 
 IdRefIter IdRefIterEval::eval(ctx::Context &ctx, const shape_t &shape) const
 {
-    IdRefIter::_idx_t idx;
-
-    for (qsizetype i = 0; i < this->idx.size(); ++i) {
-        const auto &curr = this->idx.at(i);
-
-        if (std::holds_alternative<indexeval_t>(curr)) {
-            idx.push_back(std::get<indexeval_t>(curr)->eval(&ctx));
-        } else {
-            idx.push_back(std::get<IndexIterEval>(curr).eval(ctx, shape[i]));
-        }
-    }
-
-    return IdRefIter(this->name, std::move(idx));
+    return IdRefIter(this->name, &ctx, this, shape);
 }
 
 
