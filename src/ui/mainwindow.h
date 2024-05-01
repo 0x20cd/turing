@@ -28,7 +28,7 @@ public:
 private slots:
     void on_buttonPlayPause_clicked();
     void on_buttonReset_clicked();
-    void on_actionLoadProgram_triggered();
+    void on_actionOpen_triggered();
     void on_actionLoadTape_triggered();
     void on_actionSaveTape_triggered();
     void on_speedSlider_valueChanged(int value);
@@ -36,9 +36,23 @@ private slots:
     void updateCellCount();
     void updateCellValues();
     void updateCurrentState();
+    void updateLabelStatus();
     void makeStep();
     void setStatus(Status status);
+    bool loadProgram();
+    bool onSaveProgram(bool is_save_as = false);
+    bool saveBefore();
+    void onTextChanged();
 
+    void closeEvent(QCloseEvent *event) override;
+
+
+
+    void on_actionSave_triggered();
+
+    void on_actionSave_as_triggered();
+
+    void on_actionNew_triggered();
 
 private:
     static const int T_NORMAL_MS, T_MIN_MS, T_MAX_MS;
@@ -51,8 +65,9 @@ private:
     QLabel *labelStatus;
     QTimer stepTimer;
     QIcon playIcon, pauseIcon;
-    QString loadedTape;
+    QString loadedTape, filename;
     Status status;
+    bool is_table_uptodate, is_changes_unsaved;
 };
 
 #endif // MAINWINDOW_H

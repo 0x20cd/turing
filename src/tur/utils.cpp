@@ -6,10 +6,15 @@ namespace tur::utils
     QString symbolToString(quint32 sym, std::shared_ptr<tur::parser::Alphabet> alph, bool *is_named)
     {
         QString sym_str = "???";
-        bool named = (sym & 0x80000000);
+        bool named = true;
 
-        if (!named) {
-            sym_str = std::iswprint(sym) ? QString::fromUcs4((char32_t*)&sym, 1) : QString{};
+        if (!(sym & 0x80000000)) {
+            if (std::iswprint(sym)) {
+                sym_str = QString::fromUcs4((char32_t*)&sym, 1);
+                named = false;
+            } else {
+                sym_str = "U+" + QString::number(sym, 16);
+            }
         }
         else if (alph) {
             auto ref = alph->alph.getRef(sym);

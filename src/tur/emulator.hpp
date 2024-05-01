@@ -54,6 +54,7 @@ namespace tur {
         void init(std::shared_ptr<tur::parser::Alphabet> alph, std::shared_ptr<tur::parser::States> states);
         void step();
         void reset();
+        void drop();
         bool addRule(const emu::Condition &cond, const emu::Transition &tr);
         void moveCarriage(int diff);
         void moveCarriage(Direction dir, unsigned steps = 1);

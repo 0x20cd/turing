@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <cmath>
 #include <cwctype>
+#include <QTextBlock>
 #include "mainwindow.h"
 #include "cell.h"
 #include "ui_mainwindow.h"
@@ -20,7 +21,9 @@ MainWindow::MainWindow(QWidget *parent)
     , labelStatus(new QLabel(this))
     , playIcon(":/res/play.png")
     , pauseIcon(":/res/pause.png")
-    , status(NOTREADY)
+    , status(READY)
+    , is_table_uptodate(false)
+    , is_changes_unsaved(false)
 {
     ui->setupUi(this);
 
@@ -33,11 +36,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     statusBar()->addWidget(labelStatus);
 
-    setStatus(NOTREADY);
+    setStatus(READY);
+    updateLabelStatus();
 
     QObject::connect(&stepTimer, &QTimer::timeout, this, &MainWindow::makeStep);
     QObject::connect(ui->buttonStep, &QPushButton::clicked, this, &MainWindow::makeStep);
     QObject::connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
+    QObject::connect(ui->textEdit, &QPlainTextEdit::cursorPositionChanged, this, &MainWindow::updateLabelStatus);
+    QObject::connect(ui->textEdit, &QPlainTextEdit::textChanged, this, &MainWindow::onTextChanged);
 }
 
 MainWindow::~MainWindow()
@@ -123,10 +129,25 @@ void MainWindow::updateCurrentState()
     );
 }
 
+void MainWindow::updateLabelStatus()
+{
+    auto cursorPos = ui->textEdit->textCursor();
+    labelStatus->setText(tr("%1 | Row %2, Column %3")
+        .arg(this->filename + (this->is_changes_unsaved ? "*" : QString{}))
+        .arg(cursorPos.block().blockNumber() + 1)
+        .arg(cursorPos.positionInBlock() + 1)
+    );
+}
+
 void MainWindow::makeStep()
 {
     if (status == NOTREADY || status == HALTED)
         return;
+
+    if (!this->is_table_uptodate && status != RUNNING && status != PAUSED) {
+        if (!loadProgram())
+            return;
+    }
 
     try {
         emu.step();
@@ -174,17 +195,112 @@ void MainWindow::setStatus(Status status)
         ui->buttonStep->setEnabled(status != RUNNING && status != HALTED);
     }
 
-    ui->actionLoadProgram->setEnabled(status != RUNNING && status != PAUSED);
+    ui->actionOpen->setEnabled(status != RUNNING && status != PAUSED);
     ui->actionLoadTape->setEnabled(status != RUNNING && status != PAUSED);
     ui->actionSaveTape->setEnabled(status != RUNNING);
 
     this->status = status;
 }
 
+bool MainWindow::loadProgram()
+{
+    try {
+        this->loader.loadTable(ui->textEdit->toPlainText());
+    } catch (const tur::CommonError &e) {
+        QMessageBox::critical(
+            this, tr("Error"),
+            tr("Row %1, Column %2:\n%3")
+                .arg(e.srcRef.row)
+                .arg(e.srcRef.col)
+                .arg(e.msg)
+        );
+        return false;
+    }
+
+    this->is_table_uptodate = true;
+
+    updateCellValues();
+    updateCurrentState();
+
+    setStatus(READY);
+    updateLabelStatus();
+
+    return true;
+}
+
+bool MainWindow::onSaveProgram(bool is_save_as)
+{
+    QString filename = this->filename;
+
+    if (is_save_as || this->filename.isNull()) {
+        filename = QFileDialog::getSaveFileName(this);
+        if (filename.isNull())
+            return false;
+    }
+
+    QFile file(filename);
+    file.open(QFile::WriteOnly);
+    file.write(ui->textEdit->toPlainText().toUtf8());
+    file.close();
+
+    this->filename = filename;
+    this->is_changes_unsaved = false;
+
+    updateLabelStatus();
+    return true;
+}
+
+bool MainWindow::saveBefore()
+{
+    if (this->is_changes_unsaved) {
+        auto answer = QMessageBox::question(
+            this, tr("Save changes?"), tr("Do you want to save file before closing?"),
+            QMessageBox::StandardButtons(QMessageBox::Discard | QMessageBox::Cancel | QMessageBox::Save),
+            QMessageBox::Cancel
+        );
+
+        if (answer == QMessageBox::Cancel)
+            return false;
+
+        if (answer == QMessageBox::Save) {
+            if (!onSaveProgram())
+                return false;
+        }
+    }
+
+    return true;
+}
+
+void MainWindow::onTextChanged()
+{
+    this->is_table_uptodate = false;
+    this->is_changes_unsaved = true;
+
+    updateLabelStatus();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (!saveBefore()) {
+        event->ignore();
+        return;
+    }
+
+    event->accept();
+}
+
 
 void MainWindow::on_buttonPlayPause_clicked()
 {
-    setStatus(this->status == RUNNING ? PAUSED : RUNNING);
+    if (this->status == RUNNING) {
+        setStatus(PAUSED);
+    } else {
+        if (!this->is_table_uptodate) {
+            if (!this->loadProgram())
+                return;
+        }
+        setStatus(RUNNING);
+    }
 }
 
 
@@ -204,7 +320,7 @@ void MainWindow::on_buttonReset_clicked()
 }
 
 
-void MainWindow::on_actionLoadProgram_triggered()
+void MainWindow::on_actionOpen_triggered()
 {
     QString filename = QFileDialog::getOpenFileName(this);
     if (filename.isNull())
@@ -215,24 +331,13 @@ void MainWindow::on_actionLoadProgram_triggered()
     QString source = QString::fromUtf8(file.readAll());
     file.close();
 
-    try {
-        this->loader.loadTable(source, false);
-    } catch (const tur::CommonError &e) {
-        QMessageBox::critical(
-            this, tr("Error"),
-            QString{"Row %1, column %2:\n%3"}
-                .arg(e.srcRef.row)
-                .arg(e.srcRef.col)
-                .arg(e.msg)
-        );
-        return;
-    }
+    this->ui->textEdit->setPlainText(source);
+    this->filename = filename;
+    this->is_changes_unsaved = false;
 
-    updateCellValues();
-    updateCurrentState();
+    loadProgram();
 
-    setStatus(READY);
-    labelStatus->setText(filename);
+    updateLabelStatus();
 }
 
 
@@ -270,5 +375,31 @@ void MainWindow::on_speedSlider_valueChanged(int value)
     double expPow = 1 - 1.0 * value / ui->speedSlider->maximum();
     double t = 1.0 * (T_MAX_MS - T_MIN_MS) / (basePow - 1) * (std::pow(basePow, expPow) - 1) + T_MIN_MS;
     stepTimer.setInterval((int)t);
+}
+
+
+void MainWindow::on_actionSave_triggered()
+{
+    onSaveProgram();
+}
+
+
+void MainWindow::on_actionSave_as_triggered()
+{
+    onSaveProgram(true);
+}
+
+
+void MainWindow::on_actionNew_triggered()
+{
+    if (!saveBefore())
+        return;
+
+    this->emu.drop();
+    this->filename.clear();
+    this->ui->textEdit->clear();
+    this->is_changes_unsaved = false;
+    updateLabelStatus();
+    updateCellValues();
 }
 

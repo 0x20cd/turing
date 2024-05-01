@@ -47,6 +47,14 @@ void Emulator::reset()
     m_state = STATE_START;
 }
 
+void Emulator::drop()
+{
+    this->m_alph = nullptr;
+    this->m_states = nullptr;
+    this->m_table.clear();
+    this->reset();
+}
+
 
 bool Emulator::addRule(const Condition &cond, const Transition &tr)
 {

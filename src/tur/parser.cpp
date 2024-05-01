@@ -624,4 +624,18 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
         it = it_period;
         ++it;
     }
+
+    if (!this->alph) {
+        throw ParseError{ CommonError{
+            .srcRef = end->srcRef,
+            .msg = QObject::tr("Alphabet has not been declared")
+        }};
+    }
+
+    if (!this->states) {
+        throw ParseError{ CommonError{
+            .srcRef = end->srcRef,
+            .msg = QObject::tr("States have not been declared")
+        }};
+    }
 }
