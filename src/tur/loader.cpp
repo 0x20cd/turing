@@ -133,8 +133,15 @@ void Loader::loadTable(QString source, bool preserveTape)
         );
     }
 
-    if (preserveTape)
+    if (preserveTape) {
+        auto null_old = this->m_emu.symnull(), null_new = emu.symnull();
+
         emu.m_tape = std::move(this->m_emu.m_tape);
+        for (auto &val : emu.m_tape.tape) {
+            if (val == null_old)
+                val = null_new;
+        }
+    }
 
     this->m_emu = std::move(emu);
 }
