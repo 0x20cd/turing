@@ -62,7 +62,6 @@ private:
     QString loadedTape, filename;
     Status status;
     bool is_table_uptodate, is_changes_unsaved;
-    QShortcut *sc_new, *sc_open, *sc_save, *sc_save_as, *sc_quit;
 };
 
 #endif // MAINWINDOW_H

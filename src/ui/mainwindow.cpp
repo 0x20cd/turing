@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
     , status(READY)
     , is_table_uptodate(false)
     , is_changes_unsaved(false)
-    , sc_save(nullptr)
 {
     ui->setupUi(this);
 
@@ -51,21 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     QObject::connect(ui->textEdit, &QPlainTextEdit::cursorPositionChanged, this, &MainWindow::updateLabelStatus);
     QObject::connect(ui->textEdit, &QPlainTextEdit::textChanged, this, &MainWindow::onTextChanged);
-
-    this->sc_new = new QShortcut(QKeySequence("Ctrl+N"), ui->textEdit);
-    QObject::connect(sc_new, &QShortcut::activated, this, &MainWindow::onNewFile);
-
-    this->sc_open = new QShortcut(QKeySequence("Ctrl+O"), ui->textEdit);
-    QObject::connect(sc_open, &QShortcut::activated, this, &MainWindow::onOpenProgram);
-
-    this->sc_save = new QShortcut(QKeySequence("Ctrl+S"), ui->textEdit);
-    QObject::connect(sc_save, &QShortcut::activated, [this](){ this->onSaveProgram(); });
-
-    this->sc_save_as = new QShortcut(QKeySequence("Ctrl+Shift+S"), ui->textEdit);
-    QObject::connect(sc_save_as, &QShortcut::activated, [this](){ this->onSaveProgram(true); });
-
-    this->sc_quit = new QShortcut(QKeySequence("Ctrl+Q"), this);
-    QObject::connect(sc_quit, &QShortcut::activated, this, &MainWindow::close);
 }
 
 MainWindow::~MainWindow()
