@@ -405,7 +405,8 @@ void MainWindow::on_actionEditTape_triggered()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    loader.loadTape(dialog.getContent());
+    this->loadedTape = dialog.getContent();
+    loader.loadTape(loadedTape);
     updateCellValues();
 }
 
