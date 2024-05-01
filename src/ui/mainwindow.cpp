@@ -317,7 +317,7 @@ void MainWindow::on_buttonPlayPause_clicked()
     if (this->status == RUNNING) {
         setStatus(PAUSED);
     } else {
-        if (!this->is_table_uptodate) {
+        if (!this->is_table_uptodate && this->status != PAUSED) {
             if (!this->loadProgram())
                 return;
         }
