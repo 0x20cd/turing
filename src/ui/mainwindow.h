@@ -48,6 +48,8 @@ private slots:
 
     void closeEvent(QCloseEvent *event) override;
 
+    void on_actionEditTape_triggered();
+
 private:
     static const int T_NORMAL_MS, T_MIN_MS, T_MAX_MS;
     float basePow;

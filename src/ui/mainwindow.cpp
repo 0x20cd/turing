@@ -9,6 +9,7 @@
 #include "mainwindow.h"
 #include "cell.h"
 #include "ui_mainwindow.h"
+#include "edittapedialog.h"
 
 const int MainWindow::T_NORMAL_MS = 1000;
 const int MainWindow::T_MIN_MS = 0;
@@ -394,6 +395,17 @@ void MainWindow::onNewFile()
     this->ui->textEdit->clear();
     this->is_changes_unsaved = false;
     updateLabelStatus();
+    updateCellValues();
+}
+
+
+void MainWindow::on_actionEditTape_triggered()
+{
+    EditTapeDialog dialog(this, this->loader.readTape());
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+
+    loader.loadTape(dialog.getContent());
     updateCellValues();
 }
 

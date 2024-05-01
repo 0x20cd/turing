@@ -378,6 +378,8 @@
     <property name="title">
      <string>Tape</string>
     </property>
+    <addaction name="actionEditTape"/>
+    <addaction name="separator"/>
     <addaction name="actionLoadTape"/>
     <addaction name="actionSaveTape"/>
    </widget>
@@ -433,10 +435,15 @@
   </action>
   <action name="actionSaveAs">
    <property name="text">
-    <string>Save as...</string>
+    <string>Save As...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionEditTape">
+   <property name="text">
+    <string>Edit Tape...</string>
    </property>
   </action>
  </widget>

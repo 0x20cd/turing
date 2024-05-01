@@ -31,6 +31,7 @@ set(PROJECT_SOURCES
 qt_add_executable(app-turing
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
+    src/ui/edittapedialog.h src/ui/edittapedialog.cpp src/ui/edittapedialog.ui
 )
 
 find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
