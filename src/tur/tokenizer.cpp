@@ -21,13 +21,21 @@ QList<Token> Tokenizer::tokenize(QString source)
     auto it = source.cbegin(), row_begin = source.cbegin(), tok_begin = source.cbegin();
     SourceRef srcRef{.row = 1};
 
+    bool is_comment = false;
+
     while (true)
     {
-        while (it != source.cend() && it->isSpace()) {
+        while (it != source.cend() && (is_comment || it->isSpace())) {
             if (*(it++) == '\n') {
+                is_comment = false;
                 row_begin = it;
                 ++srcRef.row;
             }
+        }
+
+        if (*it == '#') {
+            is_comment = true;
+            continue;
         }
 
         tok_begin = it;
