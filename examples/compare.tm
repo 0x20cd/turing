@@ -3,19 +3,16 @@
 # Каретка указывает на первый символ.
 
 A: hex[0..15] = '0'..'9' & 'a' .. 'f', leg[-1..1] = "<=>".
-Q: start, cmp[0..15], res[-1..1].
+Q: start, cmp[0..15].
 
 start:
 	hex{x} -> null, R, cmp[x].
 
 cmp{x}:
-	hex[x] -> null, R, res[0]. # x = y
+	hex[x] -> leg[0], N, end. # x = y
 
 cmp{x | 1..15}:
-	hex{y | 0..(x-1)} -> null, R, res[1]. # x > y
+	hex{y | 0..(x-1)} -> leg[1], N, end. # x > y
 
 cmp{x | 0..14}:
-	hex{y | (x+1)..15} -> null, R, res[-1]. # x < y
-
-res{r}:
-	null -> leg[r], N, end.
+	hex{y | (x+1)..15} -> leg[-1], N, end. # x < y

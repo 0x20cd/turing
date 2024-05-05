@@ -379,7 +379,7 @@ bool Alphabet::addNextDeclaration(QList<Token>::const_iterator &it, QList<Token>
 
             this->alph_sym.insert(std::move(desc), it_lvalue->srcRef);
         } else {
-            id_t value;
+            id::id_t value;
 
             if (it->type == Token::STRING) {
                 auto value_s = it->value.toString().toUcs4();
