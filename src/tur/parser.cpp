@@ -617,6 +617,13 @@ Parser::Parser(QList<Token>::const_iterator begin, QList<Token>::const_iterator 
             break;
 
         default:
+            if (!this->alph || !this->states) {
+                throw ParseError{ CommonError{
+                    .srcRef = it->srcRef,
+                    .msg = QObject::tr("Alphabet and states must be declared at the beginning")
+                }};
+            }
+
             StateBlock block(it, it_period);
             this->blocks.push_back(std::move(block));
         }

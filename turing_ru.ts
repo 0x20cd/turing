@@ -412,32 +412,37 @@
         <translation type="unfinished">Состояния уже были определены ранее</translation>
     </message>
     <message>
-        <location filename="src/tur/parser.cpp" line="631"/>
+        <location filename="src/tur/parser.cpp" line="623"/>
+        <source>Alphabet and states must be declared at the beginning</source>
+        <translation type="unfinished">Алфавит и состояния должны быть определены в начале</translation>
+    </message>
+    <message>
+        <location filename="src/tur/parser.cpp" line="638"/>
         <source>Alphabet has not been declared</source>
         <translation type="unfinished">Алфавит не был определён</translation>
     </message>
     <message>
-        <location filename="src/tur/parser.cpp" line="638"/>
+        <location filename="src/tur/parser.cpp" line="645"/>
         <source>States have not been declared</source>
         <translation type="unfinished">Состояния не были определены</translation>
     </message>
     <message>
-        <location filename="src/tur/tokenizer.cpp" line="89"/>
+        <location filename="src/tur/tokenizer.cpp" line="97"/>
         <source>Unexpected character &apos;%1&apos;</source>
         <translation type="unfinished">Неожиданный символ &apos;%1&apos;</translation>
     </message>
     <message>
-        <location filename="src/tur/tokenizer.cpp" line="130"/>
+        <location filename="src/tur/tokenizer.cpp" line="138"/>
         <source>Numeric value is too large</source>
         <translation type="unfinished">Числовое значение слишком велико</translation>
     </message>
     <message>
-        <location filename="src/tur/tokenizer.cpp" line="185"/>
+        <location filename="src/tur/tokenizer.cpp" line="193"/>
         <source>Invalid character &apos;%1&apos; in string literal</source>
         <translation type="unfinished">Некорректный символ &apos;%1&apos; в строковом литерале</translation>
     </message>
     <message>
-        <location filename="src/tur/tokenizer.cpp" line="192"/>
+        <location filename="src/tur/tokenizer.cpp" line="200"/>
         <source>String literal has not been terminated</source>
         <translation type="unfinished">Строковый литерал не был завершён</translation>
     </message>
