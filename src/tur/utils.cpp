@@ -9,7 +9,7 @@ namespace tur::utils
         bool named = true;
 
         if (!(sym & 0x80000000)) {
-            if (std::iswprint(sym)) {
+            if (QChar::isPrint((char32_t)sym)) {
                 sym_str = QString::fromUcs4((char32_t*)&sym, 1);
                 named = false;
             } else {
