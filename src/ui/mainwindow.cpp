@@ -259,20 +259,21 @@ bool MainWindow::onSaveProgram(bool is_save_as)
 
 bool MainWindow::saveBefore()
 {
-    if (this->is_changes_unsaved) {
-        auto answer = QMessageBox::question(
-            this, tr("Save changes?"), tr("Do you want to save file before closing?"),
-            QMessageBox::StandardButtons(QMessageBox::Discard | QMessageBox::Cancel | QMessageBox::Save),
-            QMessageBox::Cancel
-        );
+    if (!this->is_changes_unsaved)
+        return true;
 
-        if (answer == QMessageBox::Cancel)
+    auto answer = QMessageBox::question(
+        this, tr("Save changes?"), tr("Do you want to save file before closing?"),
+        QMessageBox::StandardButtons(QMessageBox::Discard | QMessageBox::Cancel | QMessageBox::Save),
+        QMessageBox::Cancel
+    );
+
+    if (answer == QMessageBox::Cancel)
+        return false;
+
+    if (answer == QMessageBox::Save) {
+        if (!onSaveProgram())
             return false;
-
-        if (answer == QMessageBox::Save) {
-            if (!onSaveProgram())
-                return false;
-        }
     }
 
     return true;
@@ -329,6 +330,9 @@ void MainWindow::on_buttonReset_clicked()
 
 void MainWindow::onOpenProgram()
 {
+    if (!saveBefore())
+        return;
+
     QString filename = QFileDialog::getOpenFileName(this);
     if (filename.isNull())
         return;
