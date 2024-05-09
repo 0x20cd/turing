@@ -421,6 +421,7 @@ void IndexIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     static quint64 anon_counter = 0;
 
     auto it = begin;
+    this->srcRef = begin->srcRef;
 
     switch (it->type) {
     case Token::ID:
@@ -449,7 +450,6 @@ void IndexIterEval::parse(QList<Token>::const_iterator begin, QList<Token>::cons
     }
     ++it;
 
-    this->srcRef = begin->srcRef;
     this->rangecateval.parse(it, end);
 }
 
