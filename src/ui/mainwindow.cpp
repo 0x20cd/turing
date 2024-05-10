@@ -294,6 +294,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
 
+    if (!this->help_window.isNull())
+        this->help_window->close();
+
     event->accept();
 }
 
@@ -412,5 +415,15 @@ void MainWindow::on_actionEditTape_triggered()
     this->loadedTape = dialog.getContent();
     loader.loadTape(loadedTape);
     updateCellValues();
+}
+
+
+void MainWindow::on_actionHelp_triggered()
+{
+    if (this->help_window.isNull())
+        this->help_window = new HelpWindow();
+
+    this->help_window->showNormal();
+    this->help_window->activateWindow();
 }
 

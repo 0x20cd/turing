@@ -385,6 +385,7 @@
    </widget>
    <addaction name="menu"/>
    <addaction name="menuTape"/>
+   <addaction name="actionHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
    <property name="sizeGripEnabled">
@@ -444,6 +445,14 @@
   <action name="actionEditTape">
    <property name="text">
     <string>Edit Tape...</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="text">
+    <string>Help</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

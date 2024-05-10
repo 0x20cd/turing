@@ -10,6 +10,14 @@
     </message>
 </context>
 <context>
+    <name>HelpWindow</name>
+    <message>
+        <location filename="src/ui/helpwindow.ui" line="14"/>
+        <source>Help</source>
+        <translation type="unfinished">Справка</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <location filename="src/ui/mainwindow.ui" line="20"/>
@@ -37,71 +45,81 @@
         <translation type="unfinished">Лента</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="396"/>
+        <location filename="src/ui/mainwindow.ui" line="397"/>
         <source>Open</source>
         <translation type="unfinished">Открыть</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="399"/>
+        <location filename="src/ui/mainwindow.ui" line="400"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="417"/>
+        <location filename="src/ui/mainwindow.ui" line="418"/>
         <source>Ctrl+Q</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="422"/>
+        <location filename="src/ui/mainwindow.ui" line="423"/>
         <source>New</source>
         <translation type="unfinished">Создать</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="425"/>
+        <location filename="src/ui/mainwindow.ui" line="426"/>
         <source>Ctrl+N</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="430"/>
+        <location filename="src/ui/mainwindow.ui" line="431"/>
         <source>Save</source>
         <translation type="unfinished">Сохранить</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="433"/>
+        <location filename="src/ui/mainwindow.ui" line="434"/>
         <source>Ctrl+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="438"/>
+        <location filename="src/ui/mainwindow.ui" line="439"/>
         <source>Save As...</source>
         <translation type="unfinished">Сохранить как...</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="441"/>
+        <location filename="src/ui/mainwindow.ui" line="442"/>
         <source>Ctrl+Shift+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="446"/>
+        <location filename="src/ui/mainwindow.ui" line="447"/>
         <source>Edit Tape...</source>
         <translation type="unfinished">Изменить ленту...</translation>
+    </message>
+    <message>
+        <location filename="src/ui/mainwindow.ui" line="452"/>
+        <source>Help</source>
+        <translation type="unfinished">Справка</translation>
+    </message>
+    <message>
+        <location filename="src/ui/mainwindow.ui" line="455"/>
+        <source>F1</source>
+        <translation></translation>
     </message>
     <message>
         <source>Load Program</source>
         <translation type="obsolete">Загрузить программу</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="404"/>
+        <location filename="src/ui/mainwindow.ui" line="405"/>
         <source>Load Tape</source>
         <translation type="unfinished">Загрузить ленту</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="409"/>
+        <location filename="src/ui/mainwindow.ui" line="410"/>
         <source>Save Tape</source>
         <translation type="unfinished">Сохранить ленту</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.ui" line="414"/>
+        <location filename="src/ui/mainwindow.ui" line="415"/>
         <source>Quit</source>
         <translation type="unfinished">Выход</translation>
     </message>
@@ -129,12 +147,12 @@
 %3</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.cpp" line="264"/>
+        <location filename="src/ui/mainwindow.cpp" line="266"/>
         <source>Save changes?</source>
         <translation type="unfinished">Сохранить изменения?</translation>
     </message>
     <message>
-        <location filename="src/ui/mainwindow.cpp" line="264"/>
+        <location filename="src/ui/mainwindow.cpp" line="266"/>
         <source>Do you want to save file before closing?</source>
         <translation type="unfinished">Вы хотите сохранить файл перед закрытием?</translation>
     </message>
@@ -185,12 +203,12 @@
         <translation type="unfinished">Ожидался числовой диапазон</translation>
     </message>
     <message>
-        <location filename="src/tur/idspace.cpp" line="435"/>
+        <location filename="src/tur/idspace.cpp" line="436"/>
         <source>Expected identifier or &apos;_&apos;</source>
         <translation type="unfinished">Ожидался идентификатор либо символ &apos;_&apos;</translation>
     </message>
     <message>
-        <location filename="src/tur/idspace.cpp" line="447"/>
+        <location filename="src/tur/idspace.cpp" line="448"/>
         <source>Expected &apos;|&apos;</source>
         <translation type="unfinished">Ожидался символ &apos;|&apos;</translation>
     </message>

@@ -8,9 +8,11 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QShortcut>
+#include <QPointer>
 #include "tur/emulator.hpp"
 #include "tur/loader.hpp"
 #include "tur/utils.hpp"
+#include "ui/helpwindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +34,8 @@ private slots:
     void on_actionLoadTape_triggered();
     void on_actionSaveTape_triggered();
     void on_speedSlider_valueChanged(int value);
+    void on_actionEditTape_triggered();
+    void on_actionHelp_triggered();
 
     void updateCellCount();
     void updateCellValues();
@@ -48,11 +52,10 @@ private slots:
 
     void closeEvent(QCloseEvent *event) override;
 
-    void on_actionEditTape_triggered();
-
 private:
     static const int T_NORMAL_MS, T_MIN_MS, T_MAX_MS;
     float basePow;
+    QPointer<HelpWindow> help_window;
     Ui::MainWindow *ui;
     tur::Emulator emu;
     tur::Loader loader;
