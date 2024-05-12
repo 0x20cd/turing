@@ -33,16 +33,16 @@ QList<Token> Tokenizer::tokenize(QString source)
             }
         }
 
-        if (*it == '#') {
-            is_comment = true;
-            continue;
-        }
-
         tok_begin = it;
         srcRef.col = tok_begin - row_begin + 1;
 
         if (it == source.cend())
             break;
+
+        if (*it == '#') {
+            is_comment = true;
+            continue;
+        }
 
         QStringView tail(&(*it), source.cend() - it);
 
