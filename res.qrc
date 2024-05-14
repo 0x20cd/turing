@@ -4,5 +4,6 @@
         <file>res/replay.png</file>
         <file>res/play.png</file>
         <file>res/pause.png</file>
+        <file>res/help.md</file>
     </qresource>
 </RCC>
