@@ -401,7 +401,10 @@ void MainWindow::onNewFile()
     this->filename.clear();
     this->ui->textEdit->clear();
     this->is_changes_unsaved = false;
+
+    this->setStatus(READY);
     updateLabelStatus();
+    updateCurrentState();
     updateCellValues();
 }
 
