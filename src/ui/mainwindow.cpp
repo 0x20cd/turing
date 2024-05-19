@@ -305,6 +305,7 @@ void MainWindow::on_buttonPlayPause_clicked()
 {
     if (this->status == RUNNING) {
         setStatus(PAUSED);
+        updateCellValues();
     } else {
         if (!this->is_table_uptodate && this->status != PAUSED) {
             if (!this->loadProgram())
