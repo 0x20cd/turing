@@ -179,8 +179,13 @@ QString Loader::readTape(bool trim) const
 
     QString output;
 
-    while (begin != end)
-        output.append(QString::fromUcs4((char32_t*)&(*begin++), 1));
+    while (begin != end) {
+        quint32 val = *begin++;
+        if (val & 0x80'00'00'00)
+            return QString();
+
+        output.append(QString::fromUcs4((char32_t*)&val, 1));
+    }
 
     return output;
 }
