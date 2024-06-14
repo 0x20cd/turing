@@ -416,9 +416,15 @@ void MainWindow::on_actionEditTape_triggered()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
+    if (emu.state() == tur::emu::STATE_END) {
+        emu.reset();
+        setStatus(READY);
+    }
+
     this->loadedTape = dialog.getContent();
     loader.loadTape(loadedTape);
     updateCellValues();
+    updateCurrentState();
 }
 
 
